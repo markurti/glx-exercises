@@ -12,7 +12,7 @@ public class Classroom {
 
     public void addStudent(Student student) {
         classroom.add(student);
-        System.out.println("Student added: " + student);
+        System.out.println("Student added to class:" + student.getName());
     }
 
     public void removeStudent(Student student) {

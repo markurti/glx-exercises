@@ -7,9 +7,13 @@ public class Student {
     private String name;
     private Map<String, Integer> coursesAndGrades;
 
-    private Student(String name) {
+    public Student(String name) {
         this.name = name;
         this.coursesAndGrades = new HashMap<String, Integer>();
+    }
+
+    public String getName() {
+        return name;
     }
 
     public void addCourseAndGrade(String course, int grade) {
