@@ -15,7 +15,11 @@ public class Classroom {
         System.out.println("Student added: " + student);
     }
 
-    public double calculateAverageClassGrade() {
+    public double calculateAverageClassGrade() throws ClassroomIsEmptyException {
+        if (students.isEmpty()) {
+            throw new ClassroomIsEmptyException("Classroom has no students in it.");
+        }
+
         double average = 0;
         for (Student student : students) {
             average += student.calculateAverageGrade();
