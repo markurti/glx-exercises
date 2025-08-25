@@ -25,6 +25,8 @@ public class Main {
             System.out.println("Numbers contains element: " + 50);
         }
 
-
+        // Sort ArrayList in ascending order
+        numbers.sort(Integer::compare);
+        System.out.println("Numbers after sorting: " + numbers);
     }
 }
