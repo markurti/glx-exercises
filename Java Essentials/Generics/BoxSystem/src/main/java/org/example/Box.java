@@ -1,7 +1,7 @@
 package org.example;
 
 public class Box<T> {
-    private T surprise;
+    private final T surprise;
 
     public Box(T surprise) {
         this.surprise = surprise;
