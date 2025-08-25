@@ -21,8 +21,10 @@ public class Main {
 
         // ArrayList Pair
         Pair<List<Integer>, List<Integer>> arrayListPair = new Pair<>(new ArrayList<>(), new ArrayList<>());
+        Pair.printPair(arrayListPair);
 
         // HashMap HashSet Pair
         Pair<Map<String, Integer>, Set<String>> hashMapHashSetPair = new Pair<>(new HashMap<>(), new HashSet<>());
+        Pair.printPair(hashMapHashSetPair);
     }
 }
