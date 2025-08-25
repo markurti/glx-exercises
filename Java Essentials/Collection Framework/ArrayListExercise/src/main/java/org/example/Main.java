@@ -15,5 +15,9 @@ public class Main {
 
         // Print all elements of the ArrayList
         System.out.println("Numbers: " + numbers);
+
+        // Remove element from 5th position
+        numbers.remove(4);
+        System.out.println("Numbers after removing 5th element: " + numbers);
     }
 }
