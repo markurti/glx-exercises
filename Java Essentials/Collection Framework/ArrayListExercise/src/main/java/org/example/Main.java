@@ -19,5 +19,12 @@ public class Main {
         // Remove element from 5th position
         numbers.remove(4);
         System.out.println("Numbers after removing 5th element: " + numbers);
+
+        // Check if a particular element exists in the ArrayList
+        if (numbers.contains(50)) {
+            System.out.println("Numbers contains element: " + 50);
+        }
+
+
     }
 }
