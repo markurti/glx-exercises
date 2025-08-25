@@ -9,7 +9,7 @@ public class Student {
 
     public Student(String name) {
         this.name = name;
-        this.coursesAndGrades = new HashMap<String, Integer>();
+        this.coursesAndGrades = new HashMap<>();
     }
 
     public String getName() {

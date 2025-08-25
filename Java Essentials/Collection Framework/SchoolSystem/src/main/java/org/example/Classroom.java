@@ -7,7 +7,7 @@ public class Classroom {
     private final Set<Student> classroom;
 
     public Classroom() {
-        classroom = new HashSet<Student>();
+        classroom = new HashSet<>();
     }
 
     public void addStudent(Student student) {
