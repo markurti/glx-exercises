@@ -17,11 +17,11 @@ public class Pair<K, V> {
         return secondPair;
     }
 
-    public Pair<V, K> swapPairs(Pair<K, V> pair) {
+    public static <E, S> Pair<E, S> swapPairs(Pair<S, E> pair) {
         return new Pair<>(pair.getSecondPair(), pair.getFirstPair());
     }
 
-    public void printPair(Pair<K, V> pair) {
+    public static <S, E> void printPair(Pair<S, E> pair) {
         System.out.println(pair.getFirstPair() + ", " + pair.getSecondPair());
     }
 }
