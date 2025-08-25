@@ -1,14 +1,32 @@
 package org.example;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class Student {
     private String name;
     private Map<String, Integer> coursesAndGrades;
 
-    private Student(String name, Map<String, Integer> coursesAndGrades) {
+    private Student(String name) {
         this.name = name;
-        this.coursesAndGrades = coursesAndGrades;
+        this.coursesAndGrades = new HashMap<String, Integer>();
+    }
+
+    public void addCourseAndGrade(String course, int grade) {
+        if (grade < 0) {
+            throw new IllegalArgumentException("Grade cannot be negative.");
+        }
+
+        coursesAndGrades.put(course, grade);
+        System.out.println("Added course " + course + " with grade " + grade);
+    }
+
+    public void updateGrade(String course, int grade) {
+        if (grade < 0) {
+            throw new IllegalArgumentException("Grade cannot be negative.");
+        }
+
+        coursesAndGrades.replace(course, grade);
     }
 
     public double calculateAverageGrade() throws NotEnrolledInAnyCoursesException {

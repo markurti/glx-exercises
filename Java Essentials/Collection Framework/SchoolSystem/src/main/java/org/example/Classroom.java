@@ -4,27 +4,41 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class Classroom {
-    private Set<Student> students;
+    private Set<Student> classroom;
 
     public Classroom() {
-        students = new HashSet<Student>();
+        classroom = new HashSet<Student>();
     }
 
     public void addStudent(Student student) {
-        students.add(student);
+        classroom.add(student);
         System.out.println("Student added: " + student);
     }
 
+    public void removeStudent(Student student) {
+        if (classroom.isEmpty()) {
+            System.out.println("Classroom is empty.");
+            return;
+        }
+
+        if (classroom.contains(student)) {
+            classroom.remove(student);
+        }
+        else {
+            System.out.println("No student with the name " + student + " exists int this classroom.");
+        }
+    }
+
     public double calculateAverageClassGrade() throws ClassroomIsEmptyException {
-        if (students.isEmpty()) {
+        if (classroom.isEmpty()) {
             throw new ClassroomIsEmptyException("Classroom has no students in it.");
         }
 
         double average = 0;
-        for (Student student : students) {
+        for (Student student : classroom) {
             average += student.calculateAverageGrade();
         }
 
-        return average / students.size();
+        return average / classroom.size();
     }
 }
