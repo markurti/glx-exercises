@@ -4,8 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Student {
-    private String name;
-    private Map<String, Integer> coursesAndGrades;
+    private final String name;
+    private final Map<String, Integer> coursesAndGrades;
 
     public Student(String name) {
         this.name = name;

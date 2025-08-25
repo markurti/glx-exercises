@@ -4,7 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class Classroom {
-    private Set<Student> classroom;
+    private final Set<Student> classroom;
 
     public Classroom() {
         classroom = new HashSet<Student>();
