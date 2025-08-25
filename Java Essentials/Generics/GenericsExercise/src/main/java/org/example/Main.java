@@ -13,6 +13,12 @@ public class Main {
         Pair<Integer, Boolean> swappedPair2 = Pair.swapPairs(pair2);
         Pair.printPair(swappedPair2);
 
+        // Wildcard implementation test
+        System.out.print('\n');
+        Pair.printPair(pair1);
+        Pair<?, ?> swappedPair1 = Pair.swap(pair1);
+        Pair.printPair(swappedPair1);
+
         // ArrayList Pair
         Pair<List<Integer>, List<Integer>> arrayListPair = new Pair<>(new ArrayList<>(), new ArrayList<>());
 

@@ -17,8 +17,14 @@ public class Pair<K, V> {
         return secondPair;
     }
 
+    // Generic implementation
     public static <E, S> Pair<E, S> swapPairs(Pair<S, E> pair) {
         return new Pair<>(pair.getSecondPair(), pair.getFirstPair());
+    }
+
+    // Wildcard implementation
+    public static Pair<?, ?> swap(Pair<?, ?> pair) {
+        return new Pair<>(pair.getFirstPair(), pair.getSecondPair());
     }
 
     public static <S, E> void printPair(Pair<S, E> pair) {
