@@ -31,7 +31,7 @@ public class Main {
         System.out.println(student3.getName() + "'s average is: " + student3.calculateAverageGrade());
         System.out.print('\n');
 
-        // Create classrooms
+        // Create 1st classroom
         Classroom classroom1 = new Classroom();
         classroom1.addStudent(student1);
         classroom1.addStudent(student2);
@@ -49,12 +49,36 @@ public class Main {
         student3.updateGrade("Computer Science", 5);
         student3.updateGrade("Geography", 5);
 
+        // Create 2nd classroom
         Classroom classroom2 = new Classroom();
         classroom2.addStudent(student1);
         classroom2.addStudent(student2);
         classroom2.addStudent(student3);
 
         System.out.println("2nd classroom's average is: " + classroom2.calculateAverageClassGrade());
+        System.out.print('\n');
 
+        // Create 1st school
+        School school1 = new School();
+
+        school1.addClassroom(classroom1);
+        school1.addClassroom(classroom2);
+
+        System.out.println("The average grade in school1 is: " + school1.calculateAverageSchoolGrade());
+
+        // Create 2nd school
+        School school2 = new School();
+
+        // Alter some grades and classrooms
+        student1.updateGrade("Philosophy", 5);
+        student1.updateGrade("Physics", 5);
+        student1.updateGrade("Computer Science", 2);
+        student2.updateGrade("Philosophy", 1);
+        classroom2.removeStudent(student1);
+
+        school2.addClassroom(classroom1);
+        school2.addClassroom(classroom2);
+
+        System.out.println("The average grade in school2 is: " + school2.calculateAverageSchoolGrade());
     }
 }

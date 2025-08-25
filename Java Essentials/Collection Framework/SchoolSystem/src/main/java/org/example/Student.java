@@ -22,7 +22,6 @@ public class Student {
         }
 
         coursesAndGrades.put(course, grade);
-        System.out.println("Added course " + course + " with grade " + grade);
     }
 
     public void updateGrade(String course, int grade) {
