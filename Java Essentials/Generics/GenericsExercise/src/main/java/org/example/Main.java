@@ -1,7 +1,6 @@
 package org.example;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class Main {
     public static void main(String[] args) {
@@ -16,5 +15,8 @@ public class Main {
 
         // ArrayList Pair
         Pair<List<Integer>, List<Integer>> arrayListPair = new Pair<>(new ArrayList<>(), new ArrayList<>());
+
+        // HashMap HashSet Pair
+        Pair<Map<String, Integer>, Set<String>> hashMapHashSetPair = new Pair<>(new HashMap<>(), new HashSet<>());
     }
 }
