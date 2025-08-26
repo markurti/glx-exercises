@@ -18,18 +18,23 @@ public class Client {
     }
 
     public void start(String[] messages) {
-        try (
-            Socket socket = new Socket(host, port);
-            BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            PrintWriter output = new PrintWriter(socket.getOutputStream(), true);
-        ) {
-            for (String msg : messages) {
-                output.println(msg);
-                String response = input.readLine();
-                System.out.println(this.name + " received: " + response);
+        // Start client on a separate thread
+        Thread clientThread = new Thread(() -> {
+            try (
+                    Socket socket = new Socket(host, port);
+                    BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                    PrintWriter output = new PrintWriter(socket.getOutputStream(), true);
+            ) {
+                // Send and receive messages
+                for (String msg : messages) {
+                    output.println(msg);
+                    String response = input.readLine();
+                    System.out.println(this.name + " received: " + response);
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        });
+        clientThread.start();
     }
 }
