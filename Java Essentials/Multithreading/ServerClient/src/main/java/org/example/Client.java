@@ -23,7 +23,7 @@ public class Client {
             try (
                     Socket socket = new Socket(host, port);
                     BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                    PrintWriter output = new PrintWriter(socket.getOutputStream(), true);
+                    PrintWriter output = new PrintWriter(socket.getOutputStream(), true)
             ) {
                 // Send and receive messages
                 for (String msg : messages) {
@@ -33,6 +33,8 @@ public class Client {
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
+            } finally {
+                Thread.currentThread().interrupt();
             }
         });
         clientThread.start();

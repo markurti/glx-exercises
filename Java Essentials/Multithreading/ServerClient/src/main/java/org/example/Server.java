@@ -31,6 +31,8 @@ public class Server {
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
+            } finally {
+                Thread.currentThread().interrupt();
             }
         });
         serverThread.start();
@@ -42,7 +44,7 @@ public class Server {
             public void run() {
                 try (
                         BufferedReader input = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-                        PrintWriter output = new PrintWriter(clientSocket.getOutputStream(), true);
+                        PrintWriter output = new PrintWriter(clientSocket.getOutputStream(), true)
                 ) {
                     String message;
                     while ((message = input.readLine()) != null) {
