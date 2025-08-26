@@ -15,44 +15,43 @@ public class Server {
     }
 
     public void startServer() {
-        // Listen for clients indefinitely
-        try (ServerSocket serverSocket = new ServerSocket(port)) {
-            System.out.println("Server started on port " + port);
+        // Start server on a separate thread
+        Thread serverThread = new Thread(() -> {
+            try (ServerSocket serverSocket = new ServerSocket(port)) {
+                System.out.println("Server started on port " + port);
 
-            while (true) {
-                Socket clientSocket = serverSocket.accept();
-                System.out.println("Client connected: " + clientSocket);
+                // Listen for clients indefinitely
+                while (true) {
+                    Socket clientSocket = serverSocket.accept();
+                    System.out.println("Client connected: " + clientSocket);
 
-                // Create thread to handle client
-                Thread clientThread = new Thread(new ClientHandler(clientSocket));
-                clientThread.start();
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private static class ClientHandler implements Runnable {
-        private final Socket clientSocket;
-
-        public ClientHandler(Socket clientSocket) {
-            this.clientSocket = clientSocket;
-        }
-
-        @Override
-        public void run() {
-            try (
-                BufferedReader input = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-                PrintWriter output = new PrintWriter(clientSocket.getOutputStream(), true);
-            ) {
-                String message;
-                while ((message = input.readLine()) != null) {
-                    System.out.println("Received: " + message);
-                    output.println("Echo: " + message);
+                    // Create thread to handle client
+                    Thread clientThread = new Thread(new ClientHandler(clientSocket));
+                    clientThread.start();
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-        }
+        });
+        serverThread.start();
     }
+
+    private record ClientHandler(Socket clientSocket) implements Runnable {
+        // Receive message and echo it back to the client
+        @Override
+            public void run() {
+                try (
+                        BufferedReader input = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                        PrintWriter output = new PrintWriter(clientSocket.getOutputStream(), true);
+                ) {
+                    String message;
+                    while ((message = input.readLine()) != null) {
+                        System.out.println("Received: " + message);
+                        output.println("Echo: " + message);
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
 }
