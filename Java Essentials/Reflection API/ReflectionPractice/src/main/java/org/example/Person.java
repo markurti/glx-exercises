@@ -24,4 +24,8 @@ public class Person {
     public int getAge() {
         return age;
     }
+
+    private void sayHello() {
+        System.out.println("Hello, my name is " + name);
+    }
 }
