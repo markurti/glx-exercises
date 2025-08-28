@@ -75,6 +75,25 @@ public class UserDao {
     }
 
     public User[] getAll() throws SQLException {
-        return null;
+        String selectQuery = "SELECT * FROM Users";
+
+        // Try with resources
+        try (Connection connection = getConnection();
+        Statement stmt = connection.createStatement();) {
+            // Execute select query
+            ResultSet rs = stmt.executeQuery(selectQuery);
+
+            // Retrieve all user data
+            User[] users = new User[rowsAffected];
+            int index = 0;
+            while (rs.next()) {
+                int id = rs.getInt("id");
+                String name = rs.getString("name");
+                String email = rs.getString("email");
+                users[index] = new User(id, name, email);
+            }
+
+            return users;
+        }
     }
 }
