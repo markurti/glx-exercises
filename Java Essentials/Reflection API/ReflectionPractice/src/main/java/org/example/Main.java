@@ -15,9 +15,9 @@ public class Main {
         try {
             ReflectionUtil.invokePrivateMethod(person, "sayHello");
         } catch (InvocationTargetException e) {
-            throw new RuntimeException("Cannot invoke method Geri: " + e.getMessage());
+            throw new RuntimeException("Cannot invoke method: " + e.getMessage());
         } catch (IllegalAccessException e) {
-            throw new RuntimeException("Cannot access method Geri: " + e.getMessage());
+            throw new RuntimeException("Cannot access method: " + e.getMessage());
         }
     }
 }
