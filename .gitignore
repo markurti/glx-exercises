@@ -7,3 +7,6 @@ target/
 
 # Ignore all Maven POMs
 pom.xml
+
+# Ignore postgresql
+postgresql-42.7.7.jar
