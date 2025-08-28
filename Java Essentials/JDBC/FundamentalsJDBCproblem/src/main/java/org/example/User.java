@@ -2,7 +2,7 @@ package org.example;
 
 public class User {
     private final int id;
-    private final String name;
+    private String name;
     private final String email;
 
     public User(int id, String name, String email) {
@@ -17,6 +17,10 @@ public class User {
 
     public String getName() {
         return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getEmail() {
