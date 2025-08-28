@@ -12,7 +12,7 @@ public class Main {
         ExecutorService executor = Executors.newFixedThreadPool(5);
 
         for (int i = 0; i < 100; i++) {
-            executor.execute(new Task(storage, "abc", 123));
+            executor.execute(new Task(storage, String.valueOf(i), 123));
         }
 
         executor.shutdown();
