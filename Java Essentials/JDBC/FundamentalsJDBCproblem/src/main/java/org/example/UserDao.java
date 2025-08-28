@@ -35,8 +35,25 @@ public class UserDao {
         }
     }
 
-    public static void update(User user) throws SQLException {
+    public void update(User user, int id) throws SQLException {
+        String updateQuery = "UPDATE Users SET id = ?, name = ?, email = ? WHERE id = ?";
 
+        // Try with resources
+        try (Connection connection = getConnection();
+        PreparedStatement stmt = connection.prepareStatement(updateQuery)) {
+            // Set parameters
+            stmt.setInt(1, user.getId());
+            stmt.setString(2, user.getName());
+            stmt.setString(3, user.getEmail());
+            stmt.setInt(4, id);
+
+            // Execute update query
+            rowsAffected = stmt.executeUpdate();
+
+            if (rowsAffected > 0) {
+                System.out.println("Successfully updated user.");
+            }
+        }
     }
 
     public static void delete(int id) throws SQLException {

@@ -8,6 +8,7 @@ public class Main {
 
         try {
             program.insert(new User(1, "Mark", "mark123@gmail.com"));
+            program.update(new User(2, "Gergo", "gergo@gmail.com"), 1);
         } catch (SQLException exception) {
             System.out.println(exception.getMessage());
         }
