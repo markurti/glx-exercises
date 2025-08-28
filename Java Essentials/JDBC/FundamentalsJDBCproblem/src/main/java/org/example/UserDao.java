@@ -56,8 +56,22 @@ public class UserDao {
         }
     }
 
-    public static void delete(int id) throws SQLException {
+    public void delete(int id) throws SQLException {
+        String deleteQuery = "DELETE FROM Users WHERE id = ?";
 
+        // Try with resources
+        try (Connection connection = getConnection();
+        PreparedStatement stmt = connection.prepareStatement(deleteQuery)) {
+            // Set parameter
+            stmt.setInt(1, id);
+
+            // Execute delete query
+            rowsAffected = stmt.executeUpdate();
+
+            if (rowsAffected > 0) {
+                System.out.println("Successfully deleted user.");
+            }
+        }
     }
 
     public User[] getAll() throws SQLException {
