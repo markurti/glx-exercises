@@ -23,5 +23,7 @@ public class Main {
         if (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
             System.err.println("Executor did not terminate after forceful shutdown attempt.");
         }
+
+        System.out.println("The final size of the ConcurrentHashMap is: " + storage.size());
     }
 }
