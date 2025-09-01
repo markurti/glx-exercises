@@ -4,10 +4,9 @@ public class Product {
     private final int id;
     private final String name;
     private final int stock;
-    private static int incrementId = 0;
 
-    public Product(String name, int stock) {
-        this.id = ++incrementId;
+    public Product(int id, String name, int stock) {
+        this.id = id;
         this.name = name;
         this.stock = stock;
     }
