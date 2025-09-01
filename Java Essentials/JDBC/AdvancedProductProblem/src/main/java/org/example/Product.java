@@ -1,9 +1,9 @@
 package org.example;
 
 public class Product {
-    private int id;
-    private String name;
-    private int stock;
+    private final int id;
+    private final String name;
+    private final int stock;
     private static int incrementId = 0;
 
     public Product(String name, int stock) {
