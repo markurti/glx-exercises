@@ -1,5 +1,5 @@
 CREATE TABLE Product (
-	id SERIAL PRIMARY KEY,
+	id INT PRIMARY KEY,
 	name VARCHAR(100),
 	stock INT
 );
