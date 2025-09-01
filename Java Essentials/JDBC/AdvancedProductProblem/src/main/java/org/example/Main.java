@@ -30,7 +30,7 @@ public class Main {
             // Reduce some stock from product 3
             System.out.println("Old stock in + " + prod3.getName() + ": " + program.getProductStock(3));
             program.reduceStock(3, 100);
-            System.out.println("New stock in " + prod3.getName() + ": " + program.getProductStock(3));
+            System.out.println("New stock in " + prod3.getName() + ": " + program.getProductStock(3) + '\n');
 
             // Clear database table to re-run the example
             program.clearProducts();
