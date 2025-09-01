@@ -138,6 +138,8 @@ public class ProductDao {
 
             if (rowsAffected == 0) {
                 throw new SQLException("Failed to clear products.");
+            } else {
+                System.out.println("Successfully cleared all products.");
             }
         }
     }
