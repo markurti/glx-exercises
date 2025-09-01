@@ -14,20 +14,23 @@ public class ProductDao {
     }
 
     public void insert(Product product) throws SQLException {
-        String insertQuery = "INSERT INTO Product (name, stock) VALUES (?, ?)";
+        String insertQuery = "INSERT INTO Product (id, name, stock) VALUES (?, ?, ?)";
 
         try (Connection conn = getConnection();
         PreparedStatement ps = conn.prepareStatement(insertQuery)) {
 
             // Set parameters
-            ps.setString(1, product.getName());
-            ps.setInt(2, product.getStock());
+            ps.setInt(1, product.getId());
+            ps.setString(2, product.getName());
+            ps.setInt(3, product.getStock());
 
             // Execute insert query
             rowsAffected = ps.executeUpdate();
 
             if (rowsAffected > 0) {
                 System.out.println("Successfully inserted new product in database.");
+            } else {
+                System.out.println("Failed to insert new product in database.");
             }
         } catch (SQLException e) {
             System.out.println(e.getMessage());
@@ -105,6 +108,36 @@ public class ProductDao {
             } finally {
                 // Restore auto-commit
                 conn.setAutoCommit(true);
+            }
+        }
+    }
+
+    public int getProductStock(int id) throws SQLException {
+        String getProductStockQuery = "SELECT stock FROM Product WHERE id = ?";
+
+        try (Connection conn = getConnection();
+        PreparedStatement ps = conn.prepareStatement(getProductStockQuery)) {
+            ps.setInt(1, id);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    throw new SQLException("Product with id " + id + " was not found.");
+                }
+
+                return rs.getInt("stock");
+            }
+        }
+    }
+
+    public void clearProducts() throws SQLException {
+        String clearProductsQuery = "DELETE FROM Product";
+
+        try (Connection conn = getConnection();
+        PreparedStatement ps = conn.prepareStatement(clearProductsQuery)) {
+            rowsAffected = ps.executeUpdate();
+
+            if (rowsAffected == 0) {
+                throw new SQLException("Failed to clear products.");
             }
         }
     }
