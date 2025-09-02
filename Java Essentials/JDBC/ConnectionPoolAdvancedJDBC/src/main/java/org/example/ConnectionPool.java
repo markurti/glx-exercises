@@ -6,16 +6,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class ConnectionPool {
     private final BlockingQueue<DatabaseConnection> connectionPool;
-    private final String url;
-    private final String username;
-    private final String password;
-    private final int maxPoolSize;
 
     public ConnectionPool(String url, String username, String password, int maxPoolSize) {
-        this.url = url;
-        this.username = username;
-        this.password = password;
-        this.maxPoolSize = maxPoolSize;
         this.connectionPool = new LinkedBlockingQueue<>();
 
         // Initialize pool with connections
@@ -38,6 +30,4 @@ public class ConnectionPool {
                 connectionPool.add(connection);
         }
     }
-
-
 }
