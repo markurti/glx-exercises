@@ -10,18 +10,4 @@ public class DatabaseConnection {
     public DatabaseConnection(String url, String username, String password) throws SQLException {
         this.connection = DriverManager.getConnection(url, username, password);
     }
-
-    public Connection getConnection() {
-        return connection;
-    }
-
-    public void close() throws SQLException {
-        if (connection != null) {
-            connection.close();
-        }
-    }
-
-    public boolean isClosed() {
-        return connection == null;
-    }
 }
