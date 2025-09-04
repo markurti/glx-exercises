@@ -1,9 +1,7 @@
 package org.example.Entity;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Hotel {
@@ -17,46 +15,176 @@ public class Hotel {
     public Hotel(String name, String location, List<Room> rooms, List<Guest> guests, List<Reservation> reservations) {
         this.name = name;
         this.location = location;
-        this.rooms = rooms;
-        this.guests = guests;
-        this.reservations = reservations;
+        this.rooms = rooms != null ? rooms : new ArrayList<>();
+        this.guests = guests != null ? guests : new ArrayList<>();
+        this.reservations = reservations != null ? reservations : new ArrayList<>();
+    }
+
+    public Hotel(int hotel_id, String location, String name) {
+        this.hotel_id = hotel_id;
+        this.location = location;
+        this.name = name;
     }
 
     public void addHotel(Hotel hotel) {
         String addHotelQuery = "INSERT INTO Hotel VALUES (?, ?)";
 
-        try {
-            String url = "jdbc:postgresql://localhost:5432/HiltonHotelDatabase";
-            String username = "postgres";
-            String password = "password";
+        String url = "jdbc:postgresql://localhost:5432/HiltonHotelDatabase";
+        String username = "postgres";
+        String password = "password";
 
-            try (Connection connection = DriverManager.getConnection(url, username, password);
-                 PreparedStatement preparedStatement = connection.prepareStatement(addHotelQuery)) {
+        try (Connection connection = DriverManager.getConnection(url, username, password);
+             PreparedStatement preparedStatement = connection.prepareStatement(addHotelQuery)) {
 
-                // Set parameters
-                preparedStatement.setString(1, hotel.getName());
-                preparedStatement.setString(2, hotel.getLocation());
+            // Set parameters
+            preparedStatement.setString(1, hotel.getName());
+            preparedStatement.setString(2, hotel.getLocation());
 
-                // Execute query
-                int rowsAffected = preparedStatement.executeUpdate();
+            // Execute query
+            int rowsAffected = preparedStatement.executeUpdate();
 
-                if (rowsAffected > 0) {
-                    System.out.println("Hotel added successfully.");
-                } else {
-                    System.out.println("Failed to add Hotel to the database.");
-                }
+            if (rowsAffected > 0) {
+                System.out.println("Hotel added successfully.");
+            } else {
+                System.out.println("Failed to add Hotel to the database.");
             }
         } catch (SQLException e) {
             throw new RuntimeException("Failed to add Hotel to the database: " + e.getMessage());
         }
     }
 
+    public Hotel getHotel(int hotel_id) {
+        String getHotelQuery = "SELECT * FROM Hotel WHERE hotel_id = ?";
+
+        String url = "jdbc:postgresql://localhost:5432/HiltonHotelDatabase";
+        String username = "postgres";
+        String password = "password";
+
+        try (Connection connection = DriverManager.getConnection(url, username, password);
+             PreparedStatement preparedStatement = connection.prepareStatement(getHotelQuery)) {
+
+            // Set parameter
+            preparedStatement.setInt(1, hotel_id);
+
+            // Execute query and get result
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (!resultSet.next()) {
+                    throw new SQLException("Hotel with id " + hotel_id + " does not exist.");
+                }
+
+                // Get data from result set
+                int id = resultSet.getInt("hotel_id");
+                String name = resultSet.getString("name");
+                String location = resultSet.getString("location");
+
+                Hotel hotel = new Hotel(id, name, location);
+
+                hotel.loadRooms(connection, id);
+                hotel.loadGuests(connection, id);
+                hotel.loadReservations(connection, id);
+
+                return hotel;
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to get Hotel with hotel_id " + hotel_id + ": " + e.getMessage());
+        }
+    }
+
+    private void loadRooms(Connection connection, int hotel_id) throws SQLException {
+        String roomQuery = "SELECT * FROM Room WHERE hotel_id = ?";
+        try (PreparedStatement preparedStatement = connection.prepareStatement(roomQuery)) {
+            preparedStatement.setInt(1, hotel_id);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    // TODO: Create room and load it in this.rooms
+                }
+            }
+        }
+    }
+
+    private void loadGuests(Connection connection, int hotel_id) throws SQLException {
+        String guestQuery = "SELECT * FROM Guest WHERE hotel_id = ?";
+        try (PreparedStatement preparedStatement = connection.prepareStatement(guestQuery)) {
+            preparedStatement.setInt(1, hotel_id);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    // TODO: Create guest and load it in this.rooms
+                }
+            }
+        }
+    }
+
+    private void loadReservations(Connection connection, int hotel_id) throws SQLException {
+        String reservationQuery = "SELECT * FROM Reservation WHERE hotel_id = ?";
+        try (PreparedStatement preparedStatement = connection.prepareStatement(reservationQuery)) {
+            preparedStatement.setInt(1, hotel_id);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    // TODO: Create reservation and load it in this.rooms
+                }
+            }
+        }
+    }
+
     // Getters and setters
+    public int getHotel_id() {
+        return hotel_id;
+    }
+
+    public void setHotel_id(int hotel_id) {
+        this.hotel_id = hotel_id;
+    }
+
     public String getName() {
         return name;
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
+
     public String getLocation() {
         return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    public List<Room> getRooms() {
+        return rooms;
+    }
+
+    public void setRooms(List<Room> rooms) {
+        this.rooms = rooms;
+    }
+
+    public List<Guest> getGuests() {
+        return guests;
+    }
+
+    public void setGuests(List<Guest> guests) {
+        this.guests = guests;
+    }
+
+    public List<Reservation> getReservations() {
+        return reservations;
+    }
+
+    public void setReservations(List<Reservation> reservations) {
+        this.reservations = reservations;
+    }
+
+    @Override
+    public String toString() {
+        return "Hotel{" +
+                "hotel_id=" + hotel_id +
+                ", name='" + name + '\'' +
+                ", location='" + location + '\'' +
+                ", rooms=" + rooms.size() +
+                ", guests=" + guests.size() +
+                ", reservations=" + reservations.size() +
+                '}';
     }
 }
