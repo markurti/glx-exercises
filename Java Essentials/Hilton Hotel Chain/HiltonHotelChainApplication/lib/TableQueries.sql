@@ -28,6 +28,7 @@ CREATE TABLE Reservation (
     reservation_id SERIAL PRIMARY KEY,
     guest_id INT NOT NULL,
     hotel_id INT NOT NULL,
+    room_id INT NOT NULL,
     checkInDate DATE NOT NULL,
     checkOutDate DATE NOT NULL,
     reservationDate DATE NOT NULL,
