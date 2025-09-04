@@ -1,5 +1,7 @@
 package org.example.Entity;
 
+import org.example.DatabaseConnectionManager;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +14,7 @@ public class Hotel {
     private List<Guest> guests;
     private List<Reservation> reservations;
 
+    // Constructor with parameters
     public Hotel(String name, String location, List<Room> rooms, List<Guest> guests, List<Reservation> reservations) {
         this.name = name;
         this.location = location;
@@ -20,6 +23,7 @@ public class Hotel {
         this.reservations = reservations != null ? reservations : new ArrayList<>();
     }
 
+    // Constructor for basic hotel info
     public Hotel(int hotel_id, String location, String name) {
         this.hotel_id = hotel_id;
         this.location = location;
@@ -29,11 +33,7 @@ public class Hotel {
     public void addHotel(Hotel hotel) {
         String addHotelQuery = "INSERT INTO Hotel VALUES (?, ?)";
 
-        String url = "jdbc:postgresql://localhost:5432/HiltonHotelDatabase";
-        String username = "postgres";
-        String password = "password";
-
-        try (Connection connection = DriverManager.getConnection(url, username, password);
+        try (Connection connection = DatabaseConnectionManager.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(addHotelQuery)) {
 
             // Set parameters
@@ -56,11 +56,7 @@ public class Hotel {
     public Hotel getHotel(int hotel_id) {
         String getHotelQuery = "SELECT * FROM Hotel WHERE hotel_id = ?";
 
-        String url = "jdbc:postgresql://localhost:5432/HiltonHotelDatabase";
-        String username = "postgres";
-        String password = "password";
-
-        try (Connection connection = DriverManager.getConnection(url, username, password);
+        try (Connection connection = DatabaseConnectionManager.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(getHotelQuery)) {
 
             // Set parameter
@@ -91,37 +87,50 @@ public class Hotel {
         }
     }
 
+    // Helper method to fetch Hotel object from the database
     private void loadRooms(Connection connection, int hotel_id) throws SQLException {
         String roomQuery = "SELECT * FROM Room WHERE hotel_id = ?";
         try (PreparedStatement preparedStatement = connection.prepareStatement(roomQuery)) {
             preparedStatement.setInt(1, hotel_id);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
-                    // TODO: Create room and load it in this.rooms
+                    Room room = new Room(resultSet.getInt("room_number"), resultSet.getString("type"),
+                            resultSet.getBoolean("available"), resultSet.getInt("hotel_id"));
+
+                    rooms.add(room);
                 }
             }
         }
     }
 
+    // Helper method to fetch Hotel object from the database
     private void loadGuests(Connection connection, int hotel_id) throws SQLException {
         String guestQuery = "SELECT * FROM Guest WHERE hotel_id = ?";
         try (PreparedStatement preparedStatement = connection.prepareStatement(guestQuery)) {
             preparedStatement.setInt(1, hotel_id);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
-                    // TODO: Create guest and load it in this.rooms
+                    Guest guest = new Guest(resultSet.getInt("guest_id"), resultSet.getString("name"),
+                            resultSet.getString("email"), resultSet.getString("phone"), resultSet.getInt("hotel_id"));
+
+                    guests.add(guest);
                 }
             }
         }
     }
 
+    // Helper method to fetch Hotel object from the database
     private void loadReservations(Connection connection, int hotel_id) throws SQLException {
         String reservationQuery = "SELECT * FROM Reservation WHERE hotel_id = ?";
         try (PreparedStatement preparedStatement = connection.prepareStatement(reservationQuery)) {
             preparedStatement.setInt(1, hotel_id);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
-                    // TODO: Create reservation and load it in this.rooms
+                    Reservation reservation = new Reservation(resultSet.getInt("reservation_id"), resultSet.getInt("guest_id"),
+                            resultSet.getInt("room_id"), resultSet.getDate("checkInDate"), resultSet.getDate("checkOutDate"),
+                            resultSet.getString("status"), resultSet.getInt("hotel_id"));
+
+                    reservations.add(reservation);
                 }
             }
         }
