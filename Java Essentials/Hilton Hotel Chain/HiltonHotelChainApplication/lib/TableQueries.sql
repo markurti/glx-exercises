@@ -1,5 +1,5 @@
 CREATE TYPE room_type_enum AS ENUM ('single', 'double');
-CREATE TYPE reservation_status_enum AS ENUM ('confirmed', 'pending', 'cancelled');
+CREATE TYPE reservation_status_enum AS ENUM ('confirmed', 'pending', 'free', 'cancelled');
 
 CREATE TABLE Hotel (
     hotel_id SERIAL PRIMARY KEY,
