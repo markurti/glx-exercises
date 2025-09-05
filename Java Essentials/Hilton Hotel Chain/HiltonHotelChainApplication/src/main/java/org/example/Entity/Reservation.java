@@ -2,11 +2,7 @@ package org.example.Entity;
 
 import org.example.DatabaseConnectionManager;
 
-import java.sql.Connection;
-import java.sql.Date;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.util.concurrent.ConcurrentHashMap;
+import java.sql.*;
 
 public class Reservation {
     private int reservation_id;
@@ -43,7 +39,7 @@ public class Reservation {
     }
 
     public void makeReservation(Reservation reservation) {
-        if (!reservation.getStatus().equals("free")) {
+        if (!reservation.getStatus().equals("free") || !reservation.getStatus().equals("cancelled")) {
             System.out.println("You can't make this reservation. Reservation Status: " + reservation.getStatus());
             return;
         }
@@ -64,7 +60,8 @@ public class Reservation {
             // Execute insert query
             int affectedRows = preparedStatement.executeUpdate();
 
-            if (affectedRows != 0 && changeRoomStatus(reservation.getRoom_id())) {
+            if (affectedRows != 0) {
+                changeRoomStatus(reservation.getRoom_id()); // Change room status
                 System.out.println("Reservation has been made. Reservation Status: confirmed");
             } else {
                 throw new SQLException("Query execution failed with no rows affected. Reservation Status: " + reservation.getStatus());
@@ -75,8 +72,40 @@ public class Reservation {
         }
     }
 
+    public boolean cancelRoomReservation(int reservation_id) throws SQLException {
+        String cancelRoomReservationQuery = "UPDATE Reservation SET status = 'cancelled' WHERE reservation_id = ?";
+        String getReservationRoomNumberQuery = "SELECT room_id FROM Reservation WHERE reservation_id = ?";
+
+        try (Connection connection = DatabaseConnectionManager.getConnection();
+        PreparedStatement preparedStatement = connection.prepareStatement(cancelRoomReservationQuery)) {
+            // Set parameter
+            preparedStatement.setInt(1, reservation_id);
+
+            // Execute update query
+            int affectedRows = preparedStatement.executeUpdate();
+
+            // Change room availability to false
+            try (PreparedStatement preparedStatement2 = connection.prepareStatement(getReservationRoomNumberQuery)) {
+                // Set parameter
+                preparedStatement2.setInt(1, reservation_id);
+
+                // Execute select query
+                try (ResultSet resultSet = preparedStatement2.executeQuery()) {
+                    if (!resultSet.next()) {
+                        throw new SQLException("Failed to fetch room number associated with the reservation.");
+                    }
+
+                    int room_id = resultSet.getInt("room_id");
+                    changeRoomStatus(room_id); // Change room status
+
+                    return true;
+                }
+            }
+        }
+    }
+
     // Helper method to change room status
-    private boolean changeRoomStatus(int room_id) throws SQLException {
+    private void changeRoomStatus(int room_id) throws SQLException {
         String updateRoomStatusQuery = "UPDATE Room SET available = FALSE WHERE room_id = ?";
 
         try (Connection connection = DatabaseConnectionManager.getConnection();
@@ -87,9 +116,7 @@ public class Reservation {
             // Execute update query
             int affectedRows = preparedStatement.executeUpdate();
 
-            if (affectedRows != 0) {
-                return true;
-            } else {
+            if (affectedRows == 0) {
                 throw new SQLException("Failed to change reserved room availability to FALSE.");
             }
         }
