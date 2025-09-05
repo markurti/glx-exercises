@@ -2,9 +2,13 @@ package org.example.Entity;
 
 import org.example.DatabaseConnectionManager;
 
+import javax.xml.crypto.Data;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Room {
     private int room_number;
@@ -55,6 +59,63 @@ public class Room {
 
         } catch (SQLException e) {
             System.out.println("Failed to add room to the database: " + e.getMessage());
+        }
+    }
+
+    public List<Room> getRoomsForHotel(int hotel_id) {
+        String fetchRoomsQuery = "SELECT * FROM Room WHERE hotel_id = ?";
+
+        try (Connection connection = DatabaseConnectionManager.getConnection();
+        PreparedStatement preparedStatement = connection.prepareStatement(fetchRoomsQuery)) {
+
+            // Set parameter
+            preparedStatement.setInt(1, hotel_id);
+
+            // Execute select query
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                List<Room> rooms = new ArrayList<>();
+
+                if (!resultSet.next()) {
+                    throw new SQLException("No room found for hotel with id: " + hotel_id);
+                }
+
+                while (resultSet.next()) {
+                    int room_number = resultSet.getInt("room_number");
+                    String type = resultSet.getString("type");
+                    boolean available = resultSet.getBoolean("available");
+
+                    Room room = new Room(room_number, type, available, hotel_id);
+                    rooms.add(room);
+
+                    return rooms;
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Failed to fetch rooms from the database: " + e.getMessage());
+        }
+        return null;
+    }
+
+    public Room getRoom(int room_number) {
+        String getRoomQuery = "SELECT * FROM Room WHERE room_number = ?";
+
+        try (Connection connection = DatabaseConnectionManager.getConnection();
+        PreparedStatement preparedStatement = connection.prepareStatement(getRoomQuery)) {
+
+            // Set parameter
+            preparedStatement.setInt(1, room_number);
+
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (!resultSet.next()) {
+                    throw new SQLException("No room found with room number: " + room_number);
+                }
+
+                return new Room(resultSet.getInt("room_number"), resultSet.getString("type"),
+                        resultSet.getBoolean("available"), resultSet.getInt("hotel_id"));
+            }
+        } catch (SQLException e) {
+            System.out.println("Failed to get room with room number " + room_number + ": " + e.getMessage());
+            return null;
         }
     }
 
