@@ -13,4 +13,38 @@ public class Room {
         this.available = available;
         this.hotel_id = hotel_id;
     }
+
+    // Getters and Setters
+    public int getRoom_number() {
+        return room_number;
+    }
+
+    public void setRoom_number(int room_number) {
+        this.room_number = room_number;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public boolean isAvailable() {
+        return available;
+    }
+
+    public void setAvailable(boolean available) {
+        this.available = available;
+    }
+
+    public int getHotel_id() {
+        return hotel_id;
+    }
+
+    public void setHotel_id(int hotel_id) {
+        this.hotel_id = hotel_id;
+    }
+
 }
