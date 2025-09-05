@@ -3,6 +3,8 @@ package org.example.Entity;
 import org.example.DatabaseConnectionManager;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Reservation {
     private int reservation_id;
@@ -20,11 +22,7 @@ public class Reservation {
         this.room_id = room_id;
         this.checkInDate = checkInDate;
         this.checkOutDate = checkOutDate;
-        if (status.equals("free")) {
-            this.status = status;
-        } else {
-            this.status = "free";
-        }
+        this.status = status;
         this.hotel_id = hotel_id;
     }
 
@@ -101,6 +99,45 @@ public class Reservation {
                     return true;
                 }
             }
+        }
+    }
+
+    public List<Reservation> getReservationForHotel(int hotel_id) {
+        String fetchReservationsForHotelQuery = "SELECT * FROM Reservation WHERE hotel_id = ?";
+
+        try (Connection connection = DatabaseConnectionManager.getConnection();
+        PreparedStatement preparedStatement = connection.prepareStatement(fetchReservationsForHotelQuery)) {
+
+            // Set parameter
+            preparedStatement.setInt(1, hotel_id);
+
+            // Execute select query
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (!resultSet.next()) {
+                    throw new SQLException("Failed to fetch reservations for hotel. Empty ResultSet.");
+                }
+
+                List<Reservation> reservations = new ArrayList<>();
+
+                while (resultSet.next()) {
+                    int reservation_id = resultSet.getInt("reservation_id");
+                    int guest_id = resultSet.getInt("guest_id");
+                    int room_id = resultSet.getInt("room_id");
+                    Date checkInDate = resultSet.getDate("checkInDate");
+                    Date checkOutDate = resultSet.getDate("checkOutDate");
+                    String status = resultSet.getString("status");
+
+                    Reservation reservation = new Reservation(reservation_id, guest_id, room_id, checkInDate, checkOutDate,
+                            status, hotel_id);
+
+                    reservations.add(reservation);
+                }
+
+                return reservations;
+            }
+        } catch (SQLException e) {
+            System.out.println("Failed to fetch reservations for hotel with id " + hotel_id + ": " + e.getMessage());
+            return null;
         }
     }
 
