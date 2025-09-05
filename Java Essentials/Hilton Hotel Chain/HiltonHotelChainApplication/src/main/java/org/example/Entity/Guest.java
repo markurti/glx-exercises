@@ -31,7 +31,7 @@ public class Guest {
     }
 
     public void addGuest(Guest guest) {
-        String addGuestQuery = "INSERT INTO Guest VALUES (?, ?, ?, ?)";
+        String addGuestQuery = "INSERT INTO Guest (name, email, phone, hotel_id) VALUES (?, ?, ?, ?)";
 
         try (Connection connection = DatabaseConnectionManager.getConnection();
         PreparedStatement preparedStatement = connection.prepareStatement(addGuestQuery)) {

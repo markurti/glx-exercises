@@ -32,7 +32,7 @@ public class Room {
     }
 
     public void addRoom(Room room) {
-        String addRoomQuery = "INSERT INTO Room VALUES (?, ?, ?)";
+        String addRoomQuery = "INSERT INTO Room (type, available, hotel_id) VALUES (?, ?, ?)";
 
         try (Connection connection = DatabaseConnectionManager.getConnection();
         PreparedStatement preparedStatement = connection.prepareStatement(addRoomQuery)) {
@@ -64,6 +64,7 @@ public class Room {
 
     public List<Room> getRoomsForHotel(int hotel_id) {
         String fetchRoomsQuery = "SELECT * FROM Room WHERE hotel_id = ?";
+        List<Room> rooms = new ArrayList<>();
 
         try (Connection connection = DatabaseConnectionManager.getConnection();
         PreparedStatement preparedStatement = connection.prepareStatement(fetchRoomsQuery)) {
@@ -73,10 +74,10 @@ public class Room {
 
             // Execute select query
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                List<Room> rooms = new ArrayList<>();
 
-                if (!resultSet.next()) {
-                    throw new SQLException("No room found for hotel with id: " + hotel_id);
+                if (!resultSet.isBeforeFirst()) {
+                    System.out.println("No rooms found for hotel with id: " + hotel_id);
+                    return rooms; // Return empty list
                 }
 
                 while (resultSet.next()) {
@@ -86,14 +87,13 @@ public class Room {
 
                     Room room = new Room(room_number, type, available, hotel_id);
                     rooms.add(room);
-
-                    return rooms;
                 }
             }
         } catch (SQLException e) {
             System.out.println("Failed to fetch rooms from the database: " + e.getMessage());
+            return null;
         }
-        return null;
+        return rooms;
     }
 
     public Room getRoom(int room_number) {

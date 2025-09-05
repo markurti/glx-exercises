@@ -42,7 +42,7 @@ public class Reservation {
             return;
         }
 
-        String reservationQuery = "INSERT INTO Reservation VALUES (?, ?, ?, ?, ?, ?)";
+        String reservationQuery = "INSERT INTO Reservation (guest_id, hotel_id, checkInDate, checkOutDate, status, hotel_id) VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = DatabaseConnectionManager.getConnection();
         PreparedStatement preparedStatement = connection.prepareStatement(reservationQuery)) {
@@ -159,9 +159,7 @@ public class Reservation {
         }
     }
 
-
     // Getters and setters
-
     public int getGuest_id() {
         return guest_id;
     }

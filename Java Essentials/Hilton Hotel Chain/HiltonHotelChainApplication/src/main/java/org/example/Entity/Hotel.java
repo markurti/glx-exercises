@@ -31,7 +31,7 @@ public class Hotel {
     }
 
     public void addHotel(Hotel hotel) {
-        String addHotelQuery = "INSERT INTO Hotel VALUES (?, ?)";
+        String addHotelQuery = "INSERT INTO Hotel (name, location) VALUES (?, ?)";
 
         try (Connection connection = DatabaseConnectionManager.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(addHotelQuery)) {
