@@ -43,8 +43,10 @@ public class ApplicationInterface {
                         makeReservationInterface();
                         break;
                     case 8:
+                        cancelReservationInterface();
                         break;
                     case 9:
+                        getAllReservationsInHotelInterface();
                         break;
                     case 0:
                         System.out.println("Closing application...");
@@ -240,6 +242,35 @@ public class ApplicationInterface {
 
         Reservation reservation = new Reservation(guestId, roomId, sqlCheckInDate, sqlCheckOutDate, hotelId);
         reservation.makeReservation(reservation);
+    }
+
+    private void cancelReservationInterface() {
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Enter reservation id: ");
+        int reservationId = scanner.nextInt();
+
+        Reservation reservationInstance = new Reservation();
+        if (reservationInstance.cancelRoomReservation(reservationId)) {
+            System.out.println("Successfully cancelled reservation.");
+        }
+    }
+
+    private void getAllReservationsInHotelInterface() {
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Enter hotel id: ");
+        int hotelId = scanner.nextInt();
+        if (!isValidHotelId(hotelId)) {
+            System.out.println("Invalid hotel id. Try again.");
+            return;
+        }
+
+        Reservation reservationInstance = new Reservation();
+        List<Reservation> reservations = reservationInstance.getReservationForHotel(hotelId);
+        if (reservations != null) {
+            for (Reservation reservation : reservations) {
+                System.out.println(reservation);
+            }
+        }
     }
 
     private Date validateSqlDate(String input) {
