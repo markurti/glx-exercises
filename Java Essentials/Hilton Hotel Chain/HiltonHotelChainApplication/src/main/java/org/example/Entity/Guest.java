@@ -1,6 +1,6 @@
 package org.example.Entity;
 
-import org.example.DatabaseConnectionManager;
+import org.example.Database.DatabaseConnectionManager;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -23,7 +23,7 @@ public class Guest {
     }
 
     // Constructor without id
-    public Guest(String email, String name, String phone, int hotel_id) {
+    public Guest(String name, String email, String phone, int hotel_id) {
         this.email = email;
         this.name = name;
         this.phone = phone;
@@ -37,8 +37,8 @@ public class Guest {
         PreparedStatement preparedStatement = connection.prepareStatement(addGuestQuery)) {
 
             // Set parameters
-            preparedStatement.setString(1, guest.getEmail());
-            preparedStatement.setString(2, guest.getName());
+            preparedStatement.setString(1, guest.getName());
+            preparedStatement.setString(2, guest.getEmail());
             preparedStatement.setString(3, guest.getPhone());
             preparedStatement.setInt(4, guest.getHotel_id());
 
