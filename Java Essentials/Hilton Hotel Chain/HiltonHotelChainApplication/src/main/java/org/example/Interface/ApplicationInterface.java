@@ -1,5 +1,6 @@
 package org.example.Interface;
 
+import org.example.Entity.Guest;
 import org.example.Entity.Hotel;
 import org.example.Entity.Room;
 
@@ -34,6 +35,7 @@ public class ApplicationInterface {
                         getAllRoomsInterface();
                         break;
                     case 6:
+                        addGuestInterface();
                         break;
                     case 7:
                         break;
@@ -157,6 +159,41 @@ public class ApplicationInterface {
         }
     }
 
+    private void addGuestInterface() {
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.print("Enter guest name: ");
+        String guestName = scanner.nextLine();
+        if (isInvalidString(guestName)) {
+            System.out.println("Invalid guest name. Try again.");
+            return;
+        }
+
+        System.out.print("Enter guest email: ");
+        String guestEmail = scanner.nextLine();
+        if (isInvalidString(guestEmail) && !guestEmail.contains("@")) {
+            System.out.println("Invalid guest email. Try again.");
+            return;
+        }
+
+        System.out.print("Enter guest phone: ");
+        String guestPhone = scanner.nextLine();
+        if (!guestPhone.matches("\\d{1,20}") && !guestPhone.trim().isEmpty()) {
+            System.out.println("Invalid phone number. Try again.");
+            return;
+        }
+
+        System.out.print("Enter hotel id: ");
+        int hotelId = scanner.nextInt();
+        if (!isValidHotelId(hotelId)) {
+            System.out.println("Invalid hotel id. Try again.");
+            return;
+        }
+
+        Guest guest = new Guest(guestName, guestEmail, guestPhone, hotelId);
+        guest.addGuest(guest);
+    }
+
     private boolean isValidHotelId(int hotelId) {
         // Check if chosen hotel exists
         Hotel hotelInstance = new Hotel();
@@ -177,6 +214,6 @@ public class ApplicationInterface {
         }
 
         // Check if contains only letters, spaces, and basic punctuation
-        return !input.trim().matches("^[a-zA-Z\\s.,'-]+$");
+        return !input.trim().matches("^[a-zA-Z\\s.,'@-]+$");
     }
 }
