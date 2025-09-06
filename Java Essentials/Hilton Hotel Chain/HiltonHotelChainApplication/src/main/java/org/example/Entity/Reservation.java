@@ -6,6 +6,7 @@ import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class Reservation {
     private int reservation_id;
@@ -36,6 +37,9 @@ public class Reservation {
         this.status = "free";
         this.hotel_id = hotel_id;
     }
+
+    // Parameterless constructor
+    public Reservation() {}
 
     public void makeReservation(Reservation reservation) {
         if (!reservation.getStatus().equals("free") && !reservation.getStatus().equals("cancelled")) {
@@ -76,7 +80,7 @@ public class Reservation {
             int affectedRows = preparedStatement.executeUpdate();
 
             if (affectedRows != 0) {
-                changeRoomStatus(reservation.getRoom_id()); // Change room status
+                changeRoomStatusToFalse(reservation.getRoom_id()); // Change room status
                 System.out.println("Reservation has been made. Reservation Status: confirmed");
             } else {
                 throw new SQLException("Query execution failed with no rows affected. Reservation Status: " + reservation.getStatus());
@@ -87,7 +91,12 @@ public class Reservation {
         }
     }
 
-    public boolean cancelRoomReservation(int reservation_id) throws SQLException {
+    public boolean cancelRoomReservation(int reservation_id) {
+        if (reservationAlreadyCancelled(reservation_id)) {
+            System.out.println("Reservation was already cancelled.");
+            return false;
+        }
+
         String cancelRoomReservationQuery = "UPDATE Reservation SET status = 'cancelled' WHERE reservation_id = ?";
         String getReservationRoomNumberQuery = "SELECT room_id FROM Reservation WHERE reservation_id = ?";
 
@@ -98,6 +107,10 @@ public class Reservation {
 
             // Execute update query
             int affectedRows = preparedStatement.executeUpdate();
+
+            if (affectedRows == 0) {
+                throw new SQLException("Can't find reservation with id: " + reservation_id);
+            }
 
             // Change room availability to false
             try (PreparedStatement preparedStatement2 = connection.prepareStatement(getReservationRoomNumberQuery)) {
@@ -111,11 +124,14 @@ public class Reservation {
                     }
 
                     int room_id = resultSet.getInt("room_id");
-                    changeRoomStatus(room_id); // Change room status
+                    changeRoomStatusToTrue(room_id); // Change room status
 
                     return true;
                 }
             }
+        } catch (SQLException e) {
+            System.out.println("Failed to cancel reservation: " + e.getMessage());
+            return false;
         }
     }
 
@@ -130,10 +146,6 @@ public class Reservation {
 
             // Execute select query
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                if (!resultSet.next()) {
-                    throw new SQLException("Failed to fetch reservations for hotel. Empty ResultSet.");
-                }
-
                 List<Reservation> reservations = new ArrayList<>();
 
                 while (resultSet.next()) {
@@ -149,7 +161,10 @@ public class Reservation {
 
                     reservations.add(reservation);
                 }
-
+                if (reservations.isEmpty()) {
+                    System.out.println("There are no reservations for this hotel.");
+                    return null;
+                }
                 return reservations;
             }
         } catch (SQLException e) {
@@ -208,6 +223,29 @@ public class Reservation {
         }
     }
 
+    // Helper method to check if the reservation was cancelled already
+    private boolean reservationAlreadyCancelled(int reservation_id) {
+        String query = "SELECT status FROM Reservation WHERE reservation_id = ?";
+
+        try (Connection connection = DatabaseConnectionManager.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setInt(1, reservation_id);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            if (resultSet.next()) {
+                String status = resultSet.getString("status");
+                return status.equals("cancelled");
+            } else {
+                System.out.println("Reservation with ID " + reservation_id + " does not exist.");
+                return false;
+            }
+        } catch (SQLException e) {
+            System.out.println("Error checking reservation status: " + e.getMessage());
+            return false;
+        }
+    }
+
     // Helper method to check if the selected room is available
     private boolean isRoomAvailable(int roomId) {
         String query = "SELECT available FROM Room WHERE room_number = ?";
@@ -231,12 +269,30 @@ public class Reservation {
         }
     }
 
-    // Helper method to change room status
-    private void changeRoomStatus(int room_id) throws SQLException {
+    // Helper method to change room status to false
+    private void changeRoomStatusToFalse(int room_id) throws SQLException {
         String updateRoomStatusQuery = "UPDATE Room SET available = FALSE WHERE room_number = ?";
 
         try (Connection connection = DatabaseConnectionManager.getConnection();
         PreparedStatement preparedStatement = connection.prepareStatement(updateRoomStatusQuery)) {
+            // Set parameter
+            preparedStatement.setInt(1, room_id);
+
+            // Execute update query
+            int affectedRows = preparedStatement.executeUpdate();
+
+            if (affectedRows == 0) {
+                throw new SQLException("Failed to change reserved room availability to FALSE.");
+            }
+        }
+    }
+
+    // Helper method to change room status to true
+    private void changeRoomStatusToTrue(int room_id) throws SQLException {
+        String updateRoomStatusQuery = "UPDATE Room SET available = TRUE WHERE room_number = ?";
+
+        try (Connection connection = DatabaseConnectionManager.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(updateRoomStatusQuery)) {
             // Set parameter
             preparedStatement.setInt(1, room_id);
 
@@ -304,5 +360,17 @@ public class Reservation {
 
     public void setHotel_id(int hotel_id) {
         this.hotel_id = hotel_id;
+    }
+
+    @Override
+    public String toString() {
+        return "Reservation {" +
+                "reservation_id=" + reservation_id +
+                ", guest_id=" + guest_id +
+                ", hotel_id=" + hotel_id +
+                ", room_number=" + room_id +
+                ", check_in_date=" + checkInDate +
+                ", check_out_date=" + checkOutDate +
+                ", status=" + status + "}";
     }
 }
