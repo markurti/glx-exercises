@@ -2,8 +2,10 @@ package org.example.Interface;
 
 import org.example.Entity.Guest;
 import org.example.Entity.Hotel;
+import org.example.Entity.Reservation;
 import org.example.Entity.Room;
 
+import java.sql.Date;
 import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Scanner;
@@ -38,6 +40,7 @@ public class ApplicationInterface {
                         addGuestInterface();
                         break;
                     case 7:
+                        makeReservationInterface();
                         break;
                     case 8:
                         break;
@@ -192,6 +195,73 @@ public class ApplicationInterface {
 
         Guest guest = new Guest(guestName, guestEmail, guestPhone, hotelId);
         guest.addGuest(guest);
+    }
+
+    private void makeReservationInterface() {
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.print("Enter guest id: ");
+        int guestId = scanner.nextInt();
+        if (!isValidGuestId(guestId)) {
+            System.out.println("Invalid guest id. Try again.");
+            return;
+        }
+
+        System.out.print("Enter room number: ");
+        int roomId = scanner.nextInt();
+        if (!isValidRoomId(roomId)) {
+            System.out.println("Invalid room number. Try again.");
+            return;
+        }
+
+        Scanner scanner2 = new Scanner(System.in);
+        System.out.print("Enter check in date (yyyy-mm-dd): ");
+        String checkInDate = scanner2.nextLine();
+        Date sqlCheckInDate = validateSqlDate(checkInDate);
+        if (sqlCheckInDate == null) {
+            System.out.println("Invalid check in date (yyyy-mm-dd). Try again.");
+            return;
+        }
+
+        System.out.print("Enter check out date (yyyy-mm-dd): ");
+        String checkOutDate = scanner2.nextLine();
+        Date sqlCheckOutDate = validateSqlDate(checkOutDate);
+        if (sqlCheckOutDate == null) {
+            System.out.println("Invalid check out date (yyyy-mm-dd). Try again.");
+            return;
+        }
+
+        System.out.print("Enter hotel id: ");
+        int hotelId = scanner2.nextInt();
+        if (!isValidHotelId(hotelId)) {
+            System.out.println("Invalid hotel id. Try again.");
+            return;
+        }
+
+        Reservation reservation = new Reservation(guestId, roomId, sqlCheckInDate, sqlCheckOutDate, hotelId);
+        reservation.makeReservation(reservation);
+    }
+
+    private Date validateSqlDate(String input) {
+        try {
+            return Date.valueOf(input);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    private boolean isValidRoomId(int roomId) {
+        // Check if chosen room exists
+        Room roomInstance = new Room();
+        Room room = roomInstance.getRoom(roomId);
+        return room != null;
+    }
+
+    private boolean isValidGuestId(int guestId) {
+        // Check if chosen guest exists
+        Guest guestInstance = new Guest();
+        Guest guest = guestInstance.getGuest(guestId);
+        return guest != null;
     }
 
     private boolean isValidHotelId(int hotelId) {
