@@ -1,7 +1,10 @@
 package org.example;
 
+import org.example.Interface.ApplicationInterface;
+
 public class Main {
     public static void main(String[] args) {
-        System.out.println("Hello world!");
+        ApplicationInterface program = new ApplicationInterface();
+        program.start();
     }
 }
