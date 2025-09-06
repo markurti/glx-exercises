@@ -1,6 +1,6 @@
 package org.example.Entity;
 
-import org.example.DatabaseConnectionManager;
+import org.example.Database.DatabaseConnectionManager;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -14,7 +14,17 @@ public class Hotel {
     private List<Guest> guests;
     private List<Reservation> reservations;
 
-    // Constructor with parameters
+    // Default Constructor
+    public Hotel(int hotel_id, String name, String location, List<Room> rooms, List<Guest> guests, List<Reservation> reservations) {
+        this.hotel_id = hotel_id;
+        this.name = name;
+        this.location = location;
+        this.rooms = rooms != null ? rooms : new ArrayList<>();
+        this.guests = guests != null ? guests : new ArrayList<>();
+        this.reservations = reservations != null ? reservations : new ArrayList<>();
+    }
+
+    // Constructor without id
     public Hotel(String name, String location, List<Room> rooms, List<Guest> guests, List<Reservation> reservations) {
         this.name = name;
         this.location = location;
@@ -29,6 +39,9 @@ public class Hotel {
         this.location = location;
         this.name = name;
     }
+
+    // Constructor for instance creation
+    public Hotel() {}
 
     public void addHotel(Hotel hotel) {
         String addHotelQuery = "INSERT INTO Hotel (name, location) VALUES (?, ?)";
@@ -73,7 +86,7 @@ public class Hotel {
                 String name = resultSet.getString("name");
                 String location = resultSet.getString("location");
 
-                Hotel hotel = new Hotel(id, name, location);
+                Hotel hotel = new Hotel(id, name, location, new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
 
                 hotel.loadRooms(connection, id);
                 hotel.loadGuests(connection, id);
@@ -83,7 +96,8 @@ public class Hotel {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to get Hotel with hotel_id " + hotel_id + ": " + e.getMessage());
+            System.out.println("Failed to get Hotel with hotel_id " + hotel_id + ": " + e.getMessage());
+            return null;
         }
     }
 
