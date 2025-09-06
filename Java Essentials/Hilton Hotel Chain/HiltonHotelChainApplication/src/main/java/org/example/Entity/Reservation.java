@@ -1,8 +1,9 @@
 package org.example.Entity;
 
-import org.example.DatabaseConnectionManager;
+import org.example.Database.DatabaseConnectionManager;
 
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,23 +38,39 @@ public class Reservation {
     }
 
     public void makeReservation(Reservation reservation) {
-        if (!reservation.getStatus().equals("free") || !reservation.getStatus().equals("cancelled")) {
+        if (!reservation.getStatus().equals("free") && !reservation.getStatus().equals("cancelled")) {
             System.out.println("You can't make this reservation. Reservation Status: " + reservation.getStatus());
             return;
         }
 
-        String reservationQuery = "INSERT INTO Reservation (guest_id, hotel_id, checkInDate, checkOutDate, status, hotel_id) VALUES (?, ?, ?, ?, ?, ?)";
+        if (!isValidDateSequence(reservation.getCheckInDate(), reservation.getCheckOutDate())) {
+            System.out.println("Invalid date sequence: Check-out date must come after Check-in date.");
+            return;
+        }
+
+        if (!isRoomInHotel(reservation.getRoom_id(), reservation.getHotel_id())) {
+            System.out.println("Invalid room selection: Room " + reservation.getRoom_id() + " does not belong to Hotel " + reservation.getHotel_id());
+            return;
+        }
+
+        if (!isRoomAvailable(reservation.getRoom_id())) {
+            System.out.println("Room " + reservation.getRoom_id() + " is not available for the selected dates.");
+            return;
+        }
+
+        String reservationQuery = "INSERT INTO Reservation (guest_id, hotel_id, room_id, checkInDate, checkOutDate, reservationDate, status) VALUES (?, ?, ?, ?, ?, ?, ?::reservation_status_enum)";
 
         try (Connection connection = DatabaseConnectionManager.getConnection();
         PreparedStatement preparedStatement = connection.prepareStatement(reservationQuery)) {
 
             // Set parameters
             preparedStatement.setInt(1, reservation.getGuest_id());
-            preparedStatement.setInt(2, reservation.getRoom_id());
-            preparedStatement.setDate(3, reservation.getCheckInDate());
-            preparedStatement.setDate(4, reservation.getCheckOutDate());
-            preparedStatement.setString(5, "confirmed"); // Reservation confirmed
-            preparedStatement.setInt(6, reservation.getHotel_id());
+            preparedStatement.setInt(2, reservation.getHotel_id());
+            preparedStatement.setInt(3, reservation.getRoom_id());
+            preparedStatement.setDate(4, reservation.getCheckInDate());
+            preparedStatement.setDate(5, reservation.getCheckOutDate());
+            preparedStatement.setDate(6, Date.valueOf(LocalDate.now()));
+            preparedStatement.setString(7, "confirmed"); // Reservation confirmed
 
             // Execute insert query
             int affectedRows = preparedStatement.executeUpdate();
@@ -141,9 +158,82 @@ public class Reservation {
         }
     }
 
+    // Helper method to check date sequence
+    private boolean isValidDateSequence(Date checkInDate, Date checkOutDate) {
+        if (checkInDate == null || checkOutDate == null) {
+            System.out.println("Error: Check-in and check-out dates cannot be null.");
+            return false;
+        }
+
+        // Convert to LocalDate for easier comparison
+        LocalDate checkIn = checkInDate.toLocalDate();
+        LocalDate checkOut = checkOutDate.toLocalDate();
+        LocalDate today = LocalDate.now();
+
+        // Check if check-out is after check-in
+        if (!checkOut.isAfter(checkIn)) {
+            return false;
+        }
+
+        // Additional validation: Check if check-in is not in the past
+        if (checkIn.isBefore(today)) {
+            System.out.println("Warning: Check-in date is in the past: " + checkIn);
+            return false;
+        }
+
+        return true;
+    }
+
+    // Helper method to check if selected room is assigned to the selected hotel
+    private boolean isRoomInHotel(int roomId, int hotelId) {
+        String query = "SELECT hotel_id FROM Room WHERE room_number = ?";
+
+        try (Connection connection = DatabaseConnectionManager.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setInt(1, roomId);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            if (resultSet.next()) {
+                int roomHotelId = resultSet.getInt("hotel_id");
+                return roomHotelId == hotelId;
+            } else {
+                System.out.println("Room with ID " + roomId + " does not exist.");
+                return false;
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Error checking room-hotel relationship: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // Helper method to check if the selected room is available
+    private boolean isRoomAvailable(int roomId) {
+        String query = "SELECT available FROM Room WHERE room_number = ?";
+
+        try (Connection connection = DatabaseConnectionManager.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setInt(1, roomId);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            if (resultSet.next()) {
+                return resultSet.getBoolean("available");
+            } else {
+                System.out.println("Room with ID " + roomId + " does not exist.");
+                return false;
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Error checking room availability: " + e.getMessage());
+            return false;
+        }
+    }
+
     // Helper method to change room status
     private void changeRoomStatus(int room_id) throws SQLException {
-        String updateRoomStatusQuery = "UPDATE Room SET available = FALSE WHERE room_id = ?";
+        String updateRoomStatusQuery = "UPDATE Room SET available = FALSE WHERE room_number = ?";
 
         try (Connection connection = DatabaseConnectionManager.getConnection();
         PreparedStatement preparedStatement = connection.prepareStatement(updateRoomStatusQuery)) {
