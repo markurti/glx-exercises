@@ -1,8 +1,7 @@
 package org.example.Entity;
 
-import org.example.DatabaseConnectionManager;
+import org.example.Database.DatabaseConnectionManager;
 
-import javax.xml.crypto.Data;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -15,6 +14,9 @@ public class Room {
     private String type;
     private boolean available;
     private int hotel_id;
+
+    // Constructor without parameters
+    public Room() {}
 
     // Constructor with parameters
     public Room(int room_number, String type, boolean available, int hotel_id) {
@@ -32,7 +34,7 @@ public class Room {
     }
 
     public void addRoom(Room room) {
-        String addRoomQuery = "INSERT INTO Room (type, available, hotel_id) VALUES (?, ?, ?)";
+        String addRoomQuery = "INSERT INTO Room (type, available, hotel_id) VALUES (?::room_type_enum, ?, ?)";
 
         try (Connection connection = DatabaseConnectionManager.getConnection();
         PreparedStatement preparedStatement = connection.prepareStatement(addRoomQuery)) {
@@ -152,4 +154,12 @@ public class Room {
         this.hotel_id = hotel_id;
     }
 
+    @Override
+    public String toString() {
+        return "Room {" +
+                "room_number: " + room_number +
+                ", type: " + type +
+                ", available: " + available +
+                ", hotel_id: " + hotel_id + "}";
+    }
 }
