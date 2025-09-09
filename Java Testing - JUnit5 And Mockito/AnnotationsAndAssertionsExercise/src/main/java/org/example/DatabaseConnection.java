@@ -15,6 +15,9 @@ public class DatabaseConnection {
         this(url, user, password);
     }
 
+    public DatabaseConnection(String url, String user, String password) {
+    }
+
     public Connection getConnection() throws SQLException {
         return DriverManager.getConnection(url, user, password);
     }
