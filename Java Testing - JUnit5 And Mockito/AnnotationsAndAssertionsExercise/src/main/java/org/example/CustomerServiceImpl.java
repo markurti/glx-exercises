@@ -26,7 +26,7 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public Customer getCustomerById(int custId) {
         if (custId <= 0) {
-            throw new IllegalArgumentException("Customer id must be positive");
+            throw new IllegalArgumentException("Customer ID must be positive");
         }
         return customerRepository.getCustomerById(custId);
     }
