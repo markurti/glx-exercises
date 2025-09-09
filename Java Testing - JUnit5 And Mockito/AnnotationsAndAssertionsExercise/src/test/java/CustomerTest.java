@@ -1,287 +1,453 @@
 import org.example.*;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 
 public class CustomerTest {
-    private CustomerService customerService;
-    private Customer testCustomer;
+    private CustomerServiceImpl customerService;
+    private static TestDatabaseConnection testDatabaseConnection;
+
+    @BeforeAll
+    static void setUpTestDatabase() {
+        // Assumption: test database is available for testing
+        testDatabaseConnection = new TestDatabaseConnection();
+
+        // Verify database connection is working before running tests
+        try (Connection connection = testDatabaseConnection.getConnection()) {
+            assumeTrue(connection != null, "Database connection must be available for tests to run");
+            assumeTrue(!connection.isClosed(), "Database connection must be active");
+            System.out.println("Successfully connected to TestCustomerDatabase");
+        } catch (SQLException e) {
+            assumeTrue(false, "Cannot connect to TestCustomerDatabase: " + e.getMessage());
+        }
+    }
 
     @BeforeEach
-    void setUp() {
-        CustomerRepository customerRepository = new CustomerRepositoryImpl();
+    void setUp() throws SQLException {
+        // Assumption: Database connection is working and application is connected to the database
+        assumeTrue(testDatabaseConnection != null, "Test database connection must be initialized");
+
+        // Initialize repository and service with test database
+        CustomerRepositoryImpl customerRepository = new CustomerRepositoryImpl(testDatabaseConnection);
         customerService = new CustomerServiceImpl(customerRepository);
 
-        // Create test customer data
-        testCustomer = new Customer(1, "John Doe", "0749237812", "Alba Iulia str. A. Muresanu nr. 56");
+        // Clear any existing test data to ensure clean state
+        testDatabaseConnection.clearTable();
+
+        // Assumption: Test database should be pre-populated with test data
+        populateTestData();
     }
 
-    // ------------- CREATE OPERATION TESTS ------------- //
+    @AfterEach
+    void tearDown() throws SQLException {
+        // Clean up test data after each test to maintain isolation
+        if (testDatabaseConnection != null) {
+            testDatabaseConnection.clearTable();
+        }
+    }
+
+    private void populateTestData() {
+        // Pre-populate test database with sample data as per assumptions
+        Customer prePopulated1 = new Customer(100, "John Smith", "555-0001", "100 Main St");
+        Customer prePopulated2 = new Customer(200, "Jane Doe", "555-0002", "200 Oak Ave");
+        Customer prePopulated3 = new Customer(300, "Bob Johnson", "555-0003", "300 Pine St");
+
+        customerService.addCustomer(prePopulated1);
+        customerService.addCustomer(prePopulated2);
+        customerService.addCustomer(prePopulated3);
+    }
+
+    // ------------- CREATE CUSTOMER TESTS ------------- //
 
     @Test
-    @DisplayName("Test creating a valid customer")
-    void testCreateCustomer() {
+    @DisplayName("Test creating a customer with valid data")
+    void testCreateCustomer_ValidData_Success() {
+        // Assumption: Database is connected and ready for CRUD operations
+        assumeTrue(customerService != null, "Customer service must be available");
+
         // Arrange
-        Customer newCustomer = new Customer(2, "Jane Smith", "0738592817", "Cluj Napoca str. B. Cogalniceanu nr. 2");
+        Customer newCustomer = new Customer(1001, "Alice Johnson", "555-1001", "1001 Elm St");
 
         // Act
-        customerService.addCustomer(newCustomer);
+        assertDoesNotThrow(() -> customerService.addCustomer(newCustomer));
 
-        // Assert - Verify customer was created
-        Customer receivedCustomer = customerService.getCustomerById(2);
-        assertNotNull(receivedCustomer);
-        assertEquals(2, receivedCustomer.getCustId());
+        // Assert - Verify customer was created in database
+        Customer retrievedCustomer = customerService.getCustomerById(1001);
+        assertNotNull(retrievedCustomer, "Customer should be created in database");
+        assertEquals(1001, retrievedCustomer.getCustId(), "Customer ID should match");
+        assertEquals("Alice Johnson", retrievedCustomer.getCustomerName(), "Customer name should match");
+        assertEquals("555-1001", retrievedCustomer.getContactNumber(), "Contact number should match");
+        assertEquals("1001 Elm St", retrievedCustomer.getAddress(), "Address should match");
     }
-
     @Test
-    @DisplayName("Validate the accuracy of customer details")
-    void testValidateCustomer() {
+    @DisplayName("Test creating a customer with invalid data - null name")
+    void testCreateCustomer_NullName_ThrowsException() {
+        // Assumption: Application validates input data before database operations
+        assumeTrue(customerService != null, "Customer service must be available");
+
         // Arrange
-        Customer customerToCreate = new Customer(3, "Bob Johnson", "07893748291", "Timisoara str. A. Alex nr. 45");
+        Customer invalidCustomer = new Customer(1002, null, "555-1002", "1002 Oak Ave");
 
-        // Act
-        customerService.addCustomer(customerToCreate);
-
-        // Assert - Validate created customer data
-        Customer createdCustomer = customerService.getCustomerById(3);
-        assertNotNull(createdCustomer);
-        assertEquals(3, createdCustomer.getCustId());
-        assertEquals("Bob Johnson", createdCustomer.getCustomerName());
-        assertEquals("07893748291", createdCustomer.getContactNumber());
-        assertEquals("Timisoara str. A. Alex nr. 45", createdCustomer.getAddress());
-    }
-
-    @Test
-    @DisplayName("Test customer creation validation - null customer")
-    void testCustomerCreationValidationNullCustomer() {
         // Act & Assert
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            customerService.addCustomer(null);
-        });
-        assertEquals("Customer cannot be null", exception.getMessage());
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> customerService.addCustomer(invalidCustomer),
+                "Creating customer with null name should throw IllegalArgumentException"
+        );
+
+        assertEquals("Customer name cannot be null or empty", exception.getMessage());
+
+        // Verify customer was not created in database
+        Customer retrievedCustomer = customerService.getCustomerById(1002);
+        assertNull(retrievedCustomer, "Customer with null name should not be created in database");
     }
 
     @Test
-    @DisplayName("Test customer creation validation - empty customer name")
-    void testCustomerCreationValidationEmptyCustomerName() {
+    @DisplayName("Test creating a customer with invalid data - empty name")
+    void testCreateCustomer_EmptyName_ThrowsException() {
         // Arrange
-        Customer invalidCustomer = new Customer(5, "", "555-0000", "Some Address");
+        Customer invalidCustomer = new Customer(1003, "", "555-1003", "1003 Pine St");
 
         // Act & Assert
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
                 () -> customerService.addCustomer(invalidCustomer)
         );
+
         assertEquals("Customer name cannot be null or empty", exception.getMessage());
     }
 
     @Test
-    @DisplayName("Test customer creation validation - null contact number")
-    void testCustomerCreationValidationNullContactNumber() {
+    @DisplayName("Test creating a customer with invalid data - null contact number")
+    void testCreateCustomer_NullContactNumber_ThrowsException() {
         // Arrange
-        Customer invalidCustomer = new Customer(6, "Valid Name", null, "Some Address");
+        Customer invalidCustomer = new Customer(1004, "Valid Name", null, "1004 Maple St");
 
         // Act & Assert
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
                 () -> customerService.addCustomer(invalidCustomer)
         );
+
         assertEquals("Contact number cannot be null or empty", exception.getMessage());
     }
 
-    // ------------- READ OPERATION TESTS ------------- //
+    @Test
+    @DisplayName("Test creating a customer with null customer object")
+    void testCreateCustomer_NullCustomer_ThrowsException() {
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> customerService.addCustomer(null)
+        );
+
+        assertEquals("Customer cannot be null", exception.getMessage());
+    }
 
     @Test
-    @DisplayName("Test retrieving customer by valid ID")
-    void testRetrieveCustomerById() {
-        // Arrange
-        customerService.addCustomer(testCustomer);
+    @DisplayName("Test creating a customer with duplicate ID")
+    void testCreateCustomer_DuplicateId_ThrowsException() {
+        // Assumption: Pre-populated data exists (customer with ID 100)
+        Customer existingCustomer = customerService.getCustomerById(100);
+        assumeTrue(existingCustomer != null, "Pre-populated customer with ID 100 should exist");
 
-        // Act
-        Customer retrievedCustomer = customerService.getCustomerById(1);
+        // Arrange - Try to create customer with same ID as pre-populated data
+        Customer duplicateCustomer = new Customer(100, "Duplicate Customer", "555-DUPE", "Duplicate Address");
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> customerService.addCustomer(duplicateCustomer)
+        );
+
+        assertTrue(exception.getMessage().contains("already exists"),
+                "Exception message should indicate duplicate ID");
+    }
+
+    // ==================== READ CUSTOMER TESTS ====================
+
+    @Test
+    @DisplayName("Test retrieving a customer by ID")
+    void testRetrieveCustomer_ValidId_Success() {
+        // Assumption: Pre-populated data exists in test database
+        assumeTrue(customerService != null, "Customer service must be available");
+
+        // Act - Retrieve pre-populated customer
+        Customer retrievedCustomer = customerService.getCustomerById(100);
 
         // Assert
-        assertNotNull(retrievedCustomer);
-        assertEquals(testCustomer.getCustId(), retrievedCustomer.getCustId());
-        assertEquals(testCustomer.getCustomerName(), retrievedCustomer.getCustomerName());
-        assertEquals(testCustomer.getContactNumber(), retrievedCustomer.getContactNumber());
-        assertEquals(testCustomer.getAddress(), retrievedCustomer.getAddress());
+        assertNotNull(retrievedCustomer, "Customer should be found in database");
+        assertEquals(100, retrievedCustomer.getCustId(), "Customer ID should match");
+        assertEquals("John Smith", retrievedCustomer.getCustomerName(), "Customer name should match pre-populated data");
+        assertEquals("555-0001", retrievedCustomer.getContactNumber(), "Contact number should match pre-populated data");
+        assertEquals("100 Main St", retrievedCustomer.getAddress(), "Address should match pre-populated data");
     }
 
     @Test
-    @DisplayName("Assert accuracy of retrieved customer information")
-    void testRetrieveCustomerByIdAccuracy() {
-        // Arrange
-        Customer expectedCustomer = new Customer(10, "Test User", "0772839172", "Test Address 123");
-        customerService.addCustomer(expectedCustomer);
-
+    @DisplayName("Test retrieving a customer by non-existent ID")
+    void testRetrieveCustomer_NonExistentId_ReturnsNull() {
         // Act
-        Customer actualCustomer = customerService.getCustomerById(10);
-
-        // Assert - Detailed validation of each field
-        assertNotNull(actualCustomer);
-        assertEquals(10, actualCustomer.getCustId(), "Customer ID should match");
-        assertEquals("Test User", actualCustomer.getCustomerName(), "Customer name should match");
-        assertEquals("0772839172", actualCustomer.getContactNumber(), "Contact number should match");
-        assertEquals("Test Address 123", actualCustomer.getAddress(), "Address should match");
-    }
-
-    @Test
-    @DisplayName("Test retrieving non-existent customer returns null")
-    void testGetCustomerByIdNonExistentCustomer() {
-        // Act
-        Customer retrievedCustomer = customerService.getCustomerById(999);
+        Customer retrievedCustomer = customerService.getCustomerById(9999);
 
         // Assert
-        assertNull(retrievedCustomer);
+        assertNull(retrievedCustomer, "Non-existent customer should return null");
     }
 
     @Test
-    @DisplayName("Test retrieving customer with invalid ID throws exception")
-    void testGetCustomerByIdInvalidCustomerId() {
+    @DisplayName("Test retrieving a customer with invalid ID")
+    void testRetrieveCustomer_InvalidId_ThrowsException() {
         // Act & Assert
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
                 () -> customerService.getCustomerById(0)
         );
-        assertEquals("Customer id must be positive", exception.getMessage());
+
+        assertEquals("Customer ID must be positive", exception.getMessage());
+
+        // Test negative ID
+        exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> customerService.getCustomerById(-1)
+        );
+
+        assertEquals("Customer ID must be positive", exception.getMessage());
     }
 
     @Test
     @DisplayName("Test retrieving all customers")
-    void testGetAllCustomers() {
-        // Arrange
-        Customer customer1 = new Customer(1, "John Doe", "123-456-7890", "123 Main St");
-        Customer customer2 = new Customer(2, "Jane Smith", "987-654-3210", "456 Oak Ave");
-        Customer customer3 = new Customer(3, "Bob Johnson", "555-123-4567", "789 Pine St");
-
-        customerService.addCustomer(customer1);
-        customerService.addCustomer(customer2);
-        customerService.addCustomer(customer3);
+    void testRetrieveAllCustomers_Success() {
+        // Assumption: Test database has pre-populated data
+        assumeTrue(customerService != null, "Customer service must be available");
 
         // Act
-        List<Customer> retrievedCustomers = customerService.getAllCustomers();
-
-        // Assert
-        assertNotNull(retrievedCustomers);
-        assertEquals(3, retrievedCustomers.size());
-        assertTrue(retrievedCustomers.contains(customer1));
-        assertTrue(retrievedCustomers.contains(customer2));
-        assertTrue(retrievedCustomers.contains(customer3));
-    }
-
-    @Test
-    @DisplayName("Assert accuracy of all retrieved customers data")
-    void testGetAllCustomersRetrievedDataAccuracy() {
-        // Arrange
-        Customer customer1 = new Customer(11, "Alice Brown", "111-111-1111", "111 First St");
-        Customer customer2 = new Customer(12, "Charlie Davis", "222-222-2222", "222 Second St");
-
-        customerService.addCustomer(customer1);
-        customerService.addCustomer(customer2);
-
-        // Act
-        List<Customer> actualCustomers = customerService.getAllCustomers();
-
-        // Assert
-        assertEquals(2, actualCustomers.size());
-
-        // Find and validate first customer
-        Customer actualCustomer1 = null;
-        for (Customer c : actualCustomers) {
-            if (c.getCustId() == 11) {
-                actualCustomer1 = c;
-                break;
-            }
-        }
-        assertNotNull(actualCustomer1);
-        assertEquals("Alice Brown", actualCustomer1.getCustomerName());
-        assertEquals("111-111-1111", actualCustomer1.getContactNumber());
-        assertEquals("111 First St", actualCustomer1.getAddress());
-
-        // Find and validate second customer
-        Customer actualCustomer2 = null;
-        for (Customer c : actualCustomers) {
-            if (c.getCustId() == 12) {
-                actualCustomer2 = c;
-                break;
-            }
-        }
-        assertNotNull(actualCustomer2);
-        assertEquals("Charlie Davis", actualCustomer2.getCustomerName());
-        assertEquals("222-222-2222", actualCustomer2.getContactNumber());
-        assertEquals("222 Second St", actualCustomer2.getAddress());
-    }
-
-    @Test
-    @DisplayName("Test retrieving all customers when repository is empty")
-    void testGetAllCustomersEmptyRepository() {
-        // Act
-        List<Customer> retrievedCustomers = customerService.getAllCustomers();
-
-        // Assert
-        assertNotNull(retrievedCustomers);
-        assertTrue(retrievedCustomers.isEmpty());
-        assertEquals(0, retrievedCustomers.size());
-    }
-
-    // ==================== CREATE AND READ INTEGRATION TESTS ====================
-
-    @Test
-    @DisplayName("Test create customer and then read the created customer")
-    void testCreateThenReadCustomer() {
-        // Arrange
-        Customer customerToCreate = new Customer(100, "Integration Test User", "999-888-7777", "Integration Test Address");
-
-        // Act
-        customerService.addCustomer(customerToCreate);
-
-        Customer retrievedCustomer = customerService.getCustomerById(100);
-
-        // Assert
-        assertNotNull(retrievedCustomer);
-        assertEquals(customerToCreate.getCustId(), retrievedCustomer.getCustId());
-        assertEquals(customerToCreate.getCustomerName(), retrievedCustomer.getCustomerName());
-        assertEquals(customerToCreate.getContactNumber(), retrievedCustomer.getContactNumber());
-        assertEquals(customerToCreate.getAddress(), retrievedCustomer.getAddress());
-    }
-
-    @Test
-    @DisplayName("Test multiple customers creation and reading")
-    void testCreateAndReadMultipleCustomers() {
-        // Arrange
-        Customer customer1 = new Customer(201, "First Customer", "111-000-0001", "Address 1");
-        Customer customer2 = new Customer(202, "Second Customer", "111-000-0002", "Address 2");
-        Customer customer3 = new Customer(203, "Third Customer", "111-000-0003", "Address 3");
-
-        // Act
-        customerService.addCustomer(customer1);
-        customerService.addCustomer(customer2);
-        customerService.addCustomer(customer3);
-
-        Customer retrieved1 = customerService.getCustomerById(201);
-        Customer retrieved2 = customerService.getCustomerById(202);
-        Customer retrieved3 = customerService.getCustomerById(203);
         List<Customer> allCustomers = customerService.getAllCustomers();
 
         // Assert
-        assertNotNull(retrieved1);
-        assertEquals("First Customer", retrieved1.getCustomerName());
+        assertNotNull(allCustomers, "Customer list should not be null");
+        assertEquals(3, allCustomers.size(), "Should have 3 pre-populated customers");
 
-        assertNotNull(retrieved2);
-        assertEquals("Second Customer", retrieved2.getCustomerName());
+        // Verify pre-populated data exists
+        assertTrue(allCustomers.stream().anyMatch(c -> c.getCustId() == 100), "Customer 100 should exist");
+        assertTrue(allCustomers.stream().anyMatch(c -> c.getCustId() == 200), "Customer 200 should exist");
+        assertTrue(allCustomers.stream().anyMatch(c -> c.getCustId() == 300), "Customer 300 should exist");
+    }
 
-        assertNotNull(retrieved3);
-        assertEquals("Third Customer", retrieved3.getCustomerName());
+    // ==================== UPDATE CUSTOMER TESTS ====================
 
-        assertEquals(3, allCustomers.size());
-        assertTrue(allCustomers.contains(customer1));
-        assertTrue(allCustomers.contains(customer2));
-        assertTrue(allCustomers.contains(customer3));
+    @Test
+    @DisplayName("Test updating a customer's information")
+    void testUpdateCustomer_ValidData_Success() {
+        // Assumption: Pre-populated customer exists for updating
+        Customer existingCustomer = customerService.getCustomerById(200);
+        assumeTrue(existingCustomer != null, "Pre-populated customer with ID 200 should exist");
+
+        // Arrange - Create updated customer with same ID but different data
+        Customer updatedCustomer = new Customer(200, "Jane Smith Updated", "555-0002-NEW", "200 Oak Ave Updated");
+
+        // Act
+        assertDoesNotThrow(() -> customerService.updateCustomer(updatedCustomer));
+
+        // Assert - Verify changes were saved to database
+        Customer retrievedCustomer = customerService.getCustomerById(200);
+        assertNotNull(retrievedCustomer, "Updated customer should exist in database");
+        assertEquals(200, retrievedCustomer.getCustId(), "Customer ID should remain unchanged");
+        assertEquals("Jane Smith Updated", retrievedCustomer.getCustomerName(), "Customer name should be updated");
+        assertEquals("555-0002-NEW", retrievedCustomer.getContactNumber(), "Contact number should be updated");
+        assertEquals("200 Oak Ave Updated", retrievedCustomer.getAddress(), "Address should be updated");
+    }
+
+    @Test
+    @DisplayName("Test updating a non-existent customer")
+    void testUpdateCustomer_NonExistentId_ThrowsException() {
+        // Arrange
+        Customer nonExistentCustomer = new Customer(9999, "Non Existent", "555-9999", "9999 Nowhere St");
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> customerService.updateCustomer(nonExistentCustomer)
+        );
+
+        assertTrue(exception.getMessage().contains("does not exist"),
+                "Exception should indicate customer does not exist");
+    }
+
+    @Test
+    @DisplayName("Test updating a customer with invalid data")
+    void testUpdateCustomer_InvalidData_ThrowsException() {
+        // Test null customer
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> customerService.updateCustomer(null)
+        );
+        assertEquals("Customer cannot be null", exception.getMessage());
+
+        // Test empty name
+        Customer invalidCustomer = new Customer(200, "", "555-0002", "200 Oak Ave");
+        exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> customerService.updateCustomer(invalidCustomer)
+        );
+        assertEquals("Customer name cannot be null or empty", exception.getMessage());
+
+        // Test null contact number
+        Customer invalidCustomer2 = new Customer(200, "Valid Name", null, "200 Oak Ave");
+        exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> customerService.updateCustomer(invalidCustomer2)
+        );
+        assertEquals("Contact number cannot be null or empty", exception.getMessage());
+    }
+
+    // ==================== DELETE CUSTOMER TESTS ====================
+
+    @Test
+    @DisplayName("Test deleting a customer")
+    void testDeleteCustomer_ValidId_Success() {
+        // Assumption: Pre-populated customer exists for deletion
+        Customer existingCustomer = customerService.getCustomerById(300);
+        assumeTrue(existingCustomer != null, "Pre-populated customer with ID 300 should exist for deletion");
+
+        // Act
+        boolean deleteResult = customerService.deleteCustomer(300);
+
+        // Assert
+        assertTrue(deleteResult, "Delete operation should return true");
+
+        // Verify customer was removed from database
+        Customer deletedCustomer = customerService.getCustomerById(300);
+        assertNull(deletedCustomer, "Deleted customer should not exist in database");
+
+        // Verify other customers still exist
+        assertNotNull(customerService.getCustomerById(100), "Other customers should remain in database");
+        assertNotNull(customerService.getCustomerById(200), "Other customers should remain in database");
+    }
+
+    @Test
+    @DisplayName("Test deleting a non-existent customer")
+    void testDeleteCustomer_NonExistentId_ReturnsFalse() {
+        // Act
+        boolean deleteResult = customerService.deleteCustomer(9999);
+
+        // Assert
+        assertFalse(deleteResult, "Deleting non-existent customer should return false");
+    }
+
+    @Test
+    @DisplayName("Test deleting a customer with invalid ID")
+    void testDeleteCustomer_InvalidId_ThrowsException() {
+        // Test zero ID
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> customerService.deleteCustomer(0)
+        );
+        assertEquals("Customer ID must be positive", exception.getMessage());
+
+        // Test negative ID
+        exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> customerService.deleteCustomer(-5)
+        );
+        assertEquals("Customer ID must be positive", exception.getMessage());
+    }
+
+    // ==================== INTEGRATION TESTS ====================
+
+    @Test
+    @DisplayName("Integration test - Create, Read, Update, Delete cycle")
+    void testCRUDCycle_CompleteWorkflow_Success() {
+        // Assumption: Database supports full CRUD operations
+        assumeTrue(customerService != null, "Customer service must be available for CRUD operations");
+
+        // CREATE - Add new customer
+        Customer newCustomer = new Customer(2001, "Integration Test User", "555-INT", "Integration Address");
+        assertDoesNotThrow(() -> customerService.addCustomer(newCustomer));
+
+        // READ - Verify customer was created
+        Customer createdCustomer = customerService.getCustomerById(2001);
+        assertNotNull(createdCustomer, "Customer should be created");
+        assertEquals("Integration Test User", createdCustomer.getCustomerName());
+
+        // UPDATE - Modify customer data
+        Customer updatedCustomer = new Customer(2001, "Updated Integration User", "555-UPD", "Updated Address");
+        assertDoesNotThrow(() -> customerService.updateCustomer(updatedCustomer));
+
+        // READ - Verify update was successful
+        Customer modifiedCustomer = customerService.getCustomerById(2001);
+        assertNotNull(modifiedCustomer, "Updated customer should exist");
+        assertEquals("Updated Integration User", modifiedCustomer.getCustomerName(), "Name should be updated");
+        assertEquals("555-UPD", modifiedCustomer.getContactNumber(), "Contact should be updated");
+
+        // DELETE - Remove customer
+        boolean deleteResult = customerService.deleteCustomer(2001);
+        assertTrue(deleteResult, "Delete should be successful");
+
+        // READ - Verify deletion was successful
+        Customer deletedCustomer = customerService.getCustomerById(2001);
+        assertNull(deletedCustomer, "Customer should be deleted");
+    }
+
+    @Test
+    @DisplayName("Test database persistence across operations")
+    void testDatabasePersistence_MultipleOperations_DataPersists() {
+        // Assumption: Database persists data across multiple operations
+        assumeTrue(customerService != null, "Customer service must be available");
+
+        // Create multiple customers
+        Customer customer1 = new Customer(3001, "Persistence Test 1", "555-P001", "Address 1");
+        Customer customer2 = new Customer(3002, "Persistence Test 2", "555-P002", "Address 2");
+
+        customerService.addCustomer(customer1);
+        customerService.addCustomer(customer2);
+
+        // Perform operations on one customer
+        customerService.updateCustomer(new Customer(3001, "Updated Persistence Test 1", "555-P001-UPD", "Updated Address 1"));
+
+        // Verify both customers persist and first customer was updated
+        Customer retrieved1 = customerService.getCustomerById(3001);
+        Customer retrieved2 = customerService.getCustomerById(3002);
+
+        assertNotNull(retrieved1, "First customer should persist");
+        assertNotNull(retrieved2, "Second customer should persist");
+        assertEquals("Updated Persistence Test 1", retrieved1.getCustomerName(), "First customer should be updated");
+        assertEquals("Persistence Test 2", retrieved2.getCustomerName(), "Second customer should remain unchanged");
+
+        // Verify total count includes pre-populated data + new customers
+        List<Customer> allCustomers = customerService.getAllCustomers();
+        assertEquals(5, allCustomers.size(), "Should have 3 pre-populated + 2 new customers");
+    }
+
+    @Test
+    @DisplayName("Test database assumptions validation")
+    void testDatabaseAssumptions_ValidateTestEnvironment() {
+        // Validate all assumptions about test environment
+
+        // Assumption 1: Database connection is available
+        assertDoesNotThrow(() -> {
+            try (Connection conn = testDatabaseConnection.getConnection()) {
+                assertNotNull(conn, "Database connection should be available");
+                assertFalse(conn.isClosed(), "Database connection should be active");
+            }
+        }, "Database connection should be working");
+
+        // Assumption 2: Test database has pre-populated data
+        List<Customer> prePopulatedData = customerService.getAllCustomers();
+        assertEquals(3, prePopulatedData.size(), "Test database should have 3 pre-populated customers");
+
+        // Assumption 3: CRUD operations work with database
+        assertDoesNotThrow(() -> {
+            // Test basic CRUD operations don't throw database errors
+            Customer testCust = new Customer(9000, "DB Test", "555-DB", "DB Address");
+            customerService.addCustomer(testCust);
+            customerService.getCustomerById(9000);
+            customerService.updateCustomer(new Customer(9000, "DB Updated", "555-DB", "DB Address"));
+            customerService.deleteCustomer(9000);
+        }, "All CRUD operations should work with database");
     }
 }
