@@ -1,7 +1,9 @@
 import org.example.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvFileSource;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -214,6 +216,38 @@ public class CustomerTest {
         }
     }
 
+    @ParameterizedTest
+    @CsvFileSource()
+    @DisplayName("Test customer creation with various invalid data combinations")
+    void testCreateCustomer_InvalidData_ParameterizedValidation(int custId, String name, String contact, String address, String expectedMessage) {
+        // Handle empty strings that should be treated as empty (not null)
+        String customerName = name.trim().isEmpty() ? "" : name;
+        String contactNumber = contact.trim().isEmpty() ? "" : contact;
+
+        // Arrange
+        Customer invalidCustomer = new Customer(custId, customerName, contactNumber, address);
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> customerService.addCustomer(invalidCustomer),
+                String.format("Customer with invalid data should throw exception: ID=%d, Name='%s', Contact='%s'",
+                        custId, customerName, contactNumber)
+        );
+
+        assertEquals(expectedMessage, exception.getMessage(),
+                String.format("Exception message should match expected for customer ID %d", custId));
+
+        // Verify customer was not created
+        Customer retrievedCustomer = customerService.getCustomerById(custId);
+        assertNull(retrievedCustomer,
+                String.format("Invalid customer with ID %d should not be created", custId));
+
+        // Verify system integrity
+        assertEquals(3, customerService.getAllCustomers().size(),
+                "Customer count should remain unchanged after validation failure");
+    }
+
     // ==================== READ CUSTOMER TESTS ====================
 
     @Test
@@ -244,24 +278,23 @@ public class CustomerTest {
         assertNull(retrievedCustomer, "Non-existent customer should return null");
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(ints = {0, -1, -5, -100, -999})
     @DisplayName("Test retrieving a customer with invalid ID")
-    void testRetrieveCustomer_InvalidId_ThrowsException() {
+    void testRetrieveCustomer_InvalidIds_ThrowsException(int invalidId) {
         // Act & Assert
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
-                () -> customerService.getCustomerById(0)
+                () -> customerService.getCustomerById(invalidId),
+                String.format("Customer ID %d should throw IllegalArgumentException", invalidId)
         );
 
-        assertEquals("Customer ID must be positive", exception.getMessage());
+        assertEquals("Customer ID must be positive", exception.getMessage(),
+                String.format("Exception message should be consistent for invalid ID: %d", invalidId));
 
-        // Test negative ID
-        exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> customerService.getCustomerById(-1)
-        );
-
-        assertEquals("Customer ID must be positive", exception.getMessage());
+        // Verify system remains stable after each invalid attempt
+        assertEquals(3, customerService.getAllCustomers().size(),
+                "Customer count should remain unchanged after invalid ID attempt");
     }
 
     @Test
@@ -446,22 +479,29 @@ public class CustomerTest {
         }
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(ints = {0, -1, -10, -50, -999})
     @DisplayName("Test deleting a customer with invalid ID")
-    void testDeleteCustomer_InvalidId_ThrowsException() {
-        // Test zero ID
+    void testDeleteCustomer_InvalidIds_ThrowsException(int invalidId) {
+        // Act & Assert - Test deletion with each invalid ID
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
-                () -> customerService.deleteCustomer(0)
+                () -> customerService.deleteCustomer(invalidId),
+                String.format("Deleting customer with invalid ID %d should throw exception", invalidId)
         );
-        assertEquals("Customer ID must be positive", exception.getMessage());
 
-        // Test negative ID
-        exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> customerService.deleteCustomer(-5)
-        );
-        assertEquals("Customer ID must be positive", exception.getMessage());
+        assertEquals("Customer ID must be positive", exception.getMessage(),
+                String.format("Exception message should be consistent for invalid ID: %d", invalidId));
+
+        // Verify no customers were accidentally deleted
+        List<Customer> customers = customerService.getAllCustomers();
+        assertEquals(3, customers.size(),
+                String.format("No customers should be deleted for invalid ID: %d", invalidId));
+
+        // Verify pre-populated customers still exist
+        assertNotNull(customerService.getCustomerById(100), "Customer 100 should still exist");
+        assertNotNull(customerService.getCustomerById(200), "Customer 200 should still exist");
+        assertNotNull(customerService.getCustomerById(300), "Customer 300 should still exist");
     }
 
     // ==================== INTEGRATION TESTS ====================
