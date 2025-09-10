@@ -69,26 +69,38 @@ public class CustomerTest {
 
     // ------------- CREATE CUSTOMER TESTS ------------- //
 
-    @Test
-    @DisplayName("Test creating a customer with valid data")
-    @Timeout(value = 5)
-    void testCreateCustomer_ValidData_Success() {
-        // Assumption: Database is connected and ready for CRUD operations
-        assumeTrue(customerService != null, "Customer service must be available");
-
+    @ParameterizedTest
+    @CsvSource({
+            "2001, 'Alice Johnson', '555-2001', '2001 Elm St'",
+            "2002, 'Bob Williams', '555-2002', '2002 Oak Ave'",
+            "2003, 'Carol Brown', '555-2003', '2003 Pine St'",
+            "2004, 'David Davis', '555-2004', '2004 Maple Ave'",
+            "2005, 'Eva Garcia', '555-2005', '2005 Cedar Blvd'"
+    })
+    @DisplayName("Test creation of multiple valid customers with different data")
+    @Timeout(value = 10) // Multiple database operations
+    void testCreateCustomer_ValidData_Success(int custId, String name, String contact, String address) {
         // Arrange
-        Customer newCustomer = new Customer(1001, "Alice Johnson", "555-1001", "1001 Elm St");
+        Customer newCustomer = new Customer(custId, name, contact, address);
 
         // Act
-        assertDoesNotThrow(() -> customerService.addCustomer(newCustomer));
+        assertDoesNotThrow(() -> customerService.addCustomer(newCustomer),
+                String.format("Creating valid customer %d should not throw exception", custId));
 
-        // Assert - Verify customer was created in database
-        Customer retrievedCustomer = customerService.getCustomerById(1001);
-        assertNotNull(retrievedCustomer, "Customer should be created in database");
-        assertEquals(1001, retrievedCustomer.getCustId(), "Customer ID should match");
-        assertEquals("Alice Johnson", retrievedCustomer.getCustomerName(), "Customer name should match");
-        assertEquals("555-1001", retrievedCustomer.getContactNumber(), "Contact number should match");
-        assertEquals("1001 Elm St", retrievedCustomer.getAddress(), "Address should match");
+        // Assert - Verify customer was created correctly
+        Customer retrievedCustomer = customerService.getCustomerById(custId);
+        assertNotNull(retrievedCustomer,
+                String.format("Customer %d should be created in database", custId));
+        assertEquals(custId, retrievedCustomer.getCustId(),
+                "Customer ID should match");
+        assertEquals(name, retrievedCustomer.getCustomerName(),
+                String.format("Customer name should match for ID %d", custId));
+        assertEquals(contact, retrievedCustomer.getContactNumber(),
+                String.format("Contact number should match for ID %d", custId));
+        assertEquals(address, retrievedCustomer.getAddress(),
+                String.format("Address should match for ID %d", custId));
+
+        System.out.printf("✓ Customer %d (%s) created successfully%n", custId, name);
     }
 
     @Test
@@ -224,7 +236,7 @@ public class CustomerTest {
             "1004, 'Valid Name', '   ', '1004 Maple St', 'Contact number cannot be null or empty'"
     })
     @DisplayName("Test customer creation with various invalid data combinations")
-    void testCreateCustomer_InvalidData_ParameterizedValidation(int custId, String name, String contact, String address, String expectedMessage) {
+    void testCreateCustomer_InvalidData_Validation(int custId, String name, String contact, String address, String expectedMessage) {
         // Handle empty strings that should be treated as empty (not null)
         String customerName = name.trim().isEmpty() ? "" : name;
         String contactNumber = contact.trim().isEmpty() ? "" : contact;
@@ -257,7 +269,7 @@ public class CustomerTest {
     @CsvFileSource(resources = "/customer-boundary-test-data.csv", numLinesToSkip = 1)
     @DisplayName("Test customer boundary conditions using CSV file")
     @Timeout(value = 15)
-    void testCustomerBoundaryConditions_FromCsvFile(int custId, String customerName, String contactNumber, String address, String expectedResult) {
+    void testCustomerBoundaryConditions(int custId, String customerName, String contactNumber, String address, String expectedResult) {
         // Arrange
         Customer customer = new Customer(custId, customerName, contactNumber, address);
 
@@ -296,6 +308,33 @@ public class CustomerTest {
         } else {
             fail("Unknown expected result in CSV: " + expectedResult);
         }
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "1, 'A', '1', 'X'",  // Minimal valid data
+            "999999, 'Very Long Customer Name That Tests Maximum Length Boundaries', '555-123-4567-8901-2345', 'Very Long Address That Tests The Maximum Length Boundaries For Address Field'",  // Maximum length data
+            "12345, 'Customer With Numbers 123', '555-ALPHA-1234', '123 Numeric Street Apt 456'",  // Mixed alphanumeric
+            "7777, 'Special-Customer_Name', '555.123.4567', '123 Main St., Suite #500'"  // Special characters
+    })
+    @DisplayName("Test customer creation with boundary and edge case values")
+    @Timeout(value = 8)
+    void testCreateCustomer_BoundaryValues_Success(int custId, String name, String contact, String address) {
+        // Arrange
+        Customer boundaryCustomer = new Customer(custId, name, contact, address);
+
+        // Act & Assert
+        assertDoesNotThrow(() -> customerService.addCustomer(boundaryCustomer),
+                String.format("Creating customer with boundary values should succeed: ID=%d", custId));
+
+        // Verify data integrity
+        Customer retrieved = customerService.getCustomerById(custId);
+        assertNotNull(retrieved, String.format("Boundary customer %d should be retrievable", custId));
+        assertEquals(name, retrieved.getCustomerName(), "Name should be preserved exactly");
+        assertEquals(contact, retrieved.getContactNumber(), "Contact should be preserved exactly");
+        assertEquals(address, retrieved.getAddress(), "Address should be preserved exactly");
+
+        System.out.printf("✓ Boundary customer %d created and verified successfully%n", custId);
     }
 
     // ==================== READ CUSTOMER TESTS ====================
@@ -506,32 +545,38 @@ public class CustomerTest {
         assertNotNull(customerService.getCustomerById(200), "Other customers should remain in database");
     }
 
-    @Test
-    @DisplayName("Test deleting a non-existent customer")
-    void testDeleteCustomer_NonExistentId_ReturnsFalse() {
+    @ParameterizedTest
+    @ValueSource(ints = {9999, 8888, 7777, 6666, 5555})
+    @DisplayName("Test deletion of non-existent customers returns false gracefully")
+    void testDeleteCustomer_NonExistentIds_ReturnsFalse(int nonExistentId) {
         try {
             // Act
-            boolean deleteResult = customerService.deleteCustomer(9999);
+            boolean deleteResult = customerService.deleteCustomer(nonExistentId);
 
-            // Assert - Should return false, not throw exception
-            assertFalse(deleteResult, "Deleting non-existent customer should return false");
+            // Assert - Should return false for non-existent customers
+            assertFalse(deleteResult,
+                    String.format("Deleting non-existent customer %d should return false", nonExistentId));
 
             // Verify system stability
             assertEquals(3, customerService.getAllCustomers().size(),
-                    "Customer count should remain unchanged");
+                    String.format("Customer count should remain unchanged after attempting to delete non-existent customer %d", nonExistentId));
 
-            System.out.println("✓ Non-existent customer deletion handled gracefully");
+            // Verify all pre-populated customers still exist
+            assertNotNull(customerService.getCustomerById(100), "Customer 100 should still exist");
+            assertNotNull(customerService.getCustomerById(200), "Customer 200 should still exist");
+            assertNotNull(customerService.getCustomerById(300), "Customer 300 should still exist");
+
+            System.out.printf("✓ Non-existent customer %d deletion handled gracefully%n", nonExistentId);
 
         } catch (IllegalArgumentException e) {
-            // Some implementations might throw exception for invalid operations
+            // Some implementations might validate the ID first
             if (e.getMessage().contains("positive") || e.getMessage().contains("valid")) {
-                System.out.println("Implementation validates ID before deletion: " + e.getMessage());
+                System.out.printf("Implementation validates ID %d before deletion: %s%n", nonExistentId, e.getMessage());
             } else {
-                fail("Unexpected validation error: " + e.getMessage());
+                fail(String.format("Unexpected validation error for ID %d: %s", nonExistentId, e.getMessage()));
             }
-
         } catch (Exception e) {
-            fail("Unexpected exception during non-existent customer deletion: " + e.getMessage());
+            fail(String.format("Unexpected exception for non-existent customer %d: %s", nonExistentId, e.getMessage()));
         }
     }
 
