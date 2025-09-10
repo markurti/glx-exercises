@@ -217,7 +217,12 @@ public class CustomerTest {
     }
 
     @ParameterizedTest
-    @CsvFileSource()
+    @CsvSource({
+            "1001, '', '555-1001', '1001 Elm St', 'Customer name cannot be null or empty'",
+            "1002, '  ', '555-1002', '1002 Oak Ave', 'Customer name cannot be null or empty'",
+            "1003, 'Valid Name', '', '1003 Pine St', 'Contact number cannot be null or empty'",
+            "1004, 'Valid Name', '   ', '1004 Maple St', 'Contact number cannot be null or empty'"
+    })
     @DisplayName("Test customer creation with various invalid data combinations")
     void testCreateCustomer_InvalidData_ParameterizedValidation(int custId, String name, String contact, String address, String expectedMessage) {
         // Handle empty strings that should be treated as empty (not null)
@@ -248,6 +253,51 @@ public class CustomerTest {
                 "Customer count should remain unchanged after validation failure");
     }
 
+    @ParameterizedTest
+    @CsvFileSource(resources = "/customer-boundary-test-data.csv", numLinesToSkip = 1)
+    @DisplayName("Test customer boundary conditions using CSV file")
+    @Timeout(value = 15)
+    void testCustomerBoundaryConditions_FromCsvFile(int custId, String customerName, String contactNumber, String address, String expectedResult) {
+        // Arrange
+        Customer customer = new Customer(custId, customerName, contactNumber, address);
+
+        if ("valid".equals(expectedResult.toLowerCase())) {
+            // Should succeed
+            assertDoesNotThrow(() -> customerService.addCustomer(customer),
+                    String.format("Valid boundary customer %d should be created", custId));
+
+            // Verify data integrity
+            Customer retrieved = customerService.getCustomerById(custId);
+            assertNotNull(retrieved, String.format("Customer %d should be retrievable", custId));
+            assertEquals(customerName, retrieved.getCustomerName(), "Name should be preserved exactly");
+            assertEquals(contactNumber, retrieved.getContactNumber(), "Contact should be preserved exactly");
+            assertEquals(address, retrieved.getAddress(), "Address should be preserved exactly");
+
+            System.out.printf("✓ Boundary customer %d created successfully: %s%n", custId, customerName);
+
+        } else if ("invalid".equals(expectedResult.toLowerCase())) {
+            // Should fail with validation exception
+            IllegalArgumentException exception = assertThrows(
+                    IllegalArgumentException.class,
+                    () -> customerService.addCustomer(customer),
+                    String.format("Invalid boundary customer %d should throw exception", custId)
+            );
+
+            // Verify appropriate error message
+            assertTrue(exception.getMessage().contains("cannot be null or empty"),
+                    "Exception should indicate validation failure");
+
+            // Verify customer was not created
+            Customer shouldNotExist = customerService.getCustomerById(custId);
+            assertNull(shouldNotExist, String.format("Invalid customer %d should not be created", custId));
+
+            System.out.printf("✓ Invalid boundary customer %d properly rejected: %s%n", custId, exception.getMessage());
+
+        } else {
+            fail("Unknown expected result in CSV: " + expectedResult);
+        }
+    }
+
     // ==================== READ CUSTOMER TESTS ====================
 
     @Test
@@ -268,14 +318,20 @@ public class CustomerTest {
         assertEquals("100 Main St", retrievedCustomer.getAddress(), "Address should match pre-populated data");
     }
 
-    @Test
-    @DisplayName("Test retrieving a customer by non-existent ID")
-    void testRetrieveCustomer_NonExistentId_ReturnsNull() {
+    @ParameterizedTest
+    @ValueSource(ints = {9999, 8888, 7777, 5000, 1500})
+    @DisplayName("Test retrieval of non-existent customers with various IDs")
+    void testRetrieveCustomer_NonExistentIds_ReturnsNull(int nonExistentId) {
         // Act
-        Customer retrievedCustomer = customerService.getCustomerById(9999);
+        Customer retrievedCustomer = customerService.getCustomerById(nonExistentId);
 
         // Assert
-        assertNull(retrievedCustomer, "Non-existent customer should return null");
+        assertNull(retrievedCustomer,
+                String.format("Customer with non-existent ID %d should return null", nonExistentId));
+
+        // Verify system stability
+        assertEquals(3, customerService.getAllCustomers().size(),
+                "Customer count should remain unchanged after non-existent customer lookup");
     }
 
     @ParameterizedTest

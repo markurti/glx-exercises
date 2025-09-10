@@ -1,0 +1,8 @@
+custId,customerName,contactNumber,address,expectedResult
+7001,A,1,X,valid
+7002,Very Long Customer Name That Tests Maximum Length Boundaries In Database Field,555-123-4567-8901-2345-EXTRA-LONG,Very Long Address That Tests The Maximum Length Boundaries For Address Field In Database Schema,valid
+7003,Customer_With_Special-Characters,555.ALPHA.1234,123 Main St. Suite #500,valid
+7004,Customer With Numbers 123,555-MIX-ALPHA-123,456 Numeric Ave Apt 789,valid
+7005,,555-7005,Empty Name Test,invalid
+7006,Valid Name,,Empty Contact Test,invalid
+7007,   ,555-7007,Whitespace Name Test,invalid
