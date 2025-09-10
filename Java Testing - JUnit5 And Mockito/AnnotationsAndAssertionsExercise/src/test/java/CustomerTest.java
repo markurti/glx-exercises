@@ -7,7 +7,9 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
@@ -709,5 +711,35 @@ public class CustomerTest {
             customerService.updateCustomer(new Customer(9000, "DB Updated", "555-DB", "DB Address"));
             customerService.deleteCustomer(9000);
         }, "All CRUD operations should work with database");
+    }
+
+    @TestFactory
+    @DisplayName("Dynamic tests to ensure customer name is not empty")
+    Stream<DynamicTest> dynamicTestCustomerNameIsNotEmpty() {
+        String[] invalidNames = {"", "   ", "\t", "\n", "    \t  \n  "};
+
+        return Arrays.stream(invalidNames)
+                .map(invalidName -> DynamicTest.dynamicTest(
+                   String.format("Test invalid customer name: '%s'", invalidName),
+                        () -> dynamicTestForCustomer(invalidName)
+                ));
+    }
+
+    private void dynamicTestForCustomer(String customerName) {
+        int custId = 8000 + Math.abs((customerName != null ? customerName : "null").hashCode());
+        Customer testCustomer = new Customer(custId, customerName, "555-8000", "TestAddress");
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> customerService.addCustomer(testCustomer),
+                String.format("Customer with invalid name '%s' should throw exception", customerName)
+        );
+
+        assertTrue(exception.getMessage().contains("Customer name cannot be null or empty"),
+                "Exception should indicate name validation failure");
+
+        // Verify customer was not created
+        Customer shouldNotExist = customerService.getCustomerById(custId);
+        assertNull(shouldNotExist, "Invalid customer should not be created");
     }
 }
