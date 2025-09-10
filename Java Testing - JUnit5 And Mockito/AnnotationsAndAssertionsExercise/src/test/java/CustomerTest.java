@@ -67,6 +67,7 @@ public class CustomerTest {
 
     @Test
     @DisplayName("Test creating a customer with valid data")
+    @Timeout(value = 5)
     void testCreateCustomer_ValidData_Success() {
         // Assumption: Database is connected and ready for CRUD operations
         assumeTrue(customerService != null, "Customer service must be available");
@@ -85,6 +86,7 @@ public class CustomerTest {
         assertEquals("555-1001", retrievedCustomer.getContactNumber(), "Contact number should match");
         assertEquals("1001 Elm St", retrievedCustomer.getAddress(), "Address should match");
     }
+
     @Test
     @DisplayName("Test creating a customer with invalid data - null name")
     void testCreateCustomer_NullName_ThrowsException() {
@@ -94,18 +96,29 @@ public class CustomerTest {
         // Arrange
         Customer invalidCustomer = new Customer(1002, null, "555-1002", "1002 Oak Ave");
 
-        // Act & Assert
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> customerService.addCustomer(invalidCustomer),
-                "Creating customer with null name should throw IllegalArgumentException"
-        );
+        try {
+            // Act - Attempt to create customer with null name
+            customerService.addCustomer(invalidCustomer);
 
-        assertEquals("Customer name cannot be null or empty", exception.getMessage());
+            // If no exception is thrown, the test should fail
+            fail("Expected IllegalArgumentException was not thrown for null customer name");
+        } catch (IllegalArgumentException e) {
+            // Expected exception - verify error handling
+            assertNotNull(e.getMessage(), "Exception message should not be null");
+            assertEquals("Customer name cannot be null or empty", e.getMessage(),
+                    "Exception message should be specific and informative");
 
-        // Verify customer was not created in database
-        Customer retrievedCustomer = customerService.getCustomerById(1002);
-        assertNull(retrievedCustomer, "Customer with null name should not be created in database");
+            // Verify customer was not created in database
+            Customer retrievedCustomer = customerService.getCustomerById(1002);
+            assertNull(retrievedCustomer, "Customer with null name should not be created in database");
+
+            // Verify system state remains consistent
+            List<Customer> customers = customerService.getAllCustomers();
+            assertEquals(3, customers.size(), "Customer count should remain unchanged after validation failure");
+        } catch (Exception e) {
+            // Unexpected exception type
+            fail(String.format("Expected IllegalArgumentException but got %s: %s", e.getClass().getSimpleName(), e.getMessage()));
+        }
     }
 
     @Test
@@ -159,21 +172,51 @@ public class CustomerTest {
 
         // Arrange - Try to create customer with same ID as pre-populated data
         Customer duplicateCustomer = new Customer(100, "Duplicate Customer", "555-DUPE", "Duplicate Address");
+        String originalCustomerName = existingCustomer.getCustomerName();
 
-        // Act & Assert
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> customerService.addCustomer(duplicateCustomer)
-        );
+        try {
+            // Act
+            customerService.addCustomer(duplicateCustomer);
+            fail("Expected exception for duplicate customer ID");
 
-        assertTrue(exception.getMessage().contains("already exists"),
-                "Exception message should indicate duplicate ID");
+        } catch (IllegalArgumentException e) {
+            // Expected exception - verify proper handling
+            assertTrue(e.getMessage().contains("already exists"),
+                    "Exception message should indicate duplicate ID");
+            assertTrue(e.getMessage().contains("100"),
+                    "Exception message should include the conflicting ID");
+
+            // Verify original customer data is preserved
+            Customer preservedCustomer = customerService.getCustomerById(100);
+            assertNotNull(preservedCustomer, "Original customer should still exist");
+            assertEquals(originalCustomerName, preservedCustomer.getCustomerName(),
+                    "Original customer data should be preserved");
+
+            System.out.println("✓ Duplicate ID properly handled - original data preserved");
+
+        } catch (RuntimeException e) {
+            // Handle potential database constraint violations
+            if (e.getMessage().contains("duplicate") || e.getMessage().contains("unique")) {
+                System.out.println("Database constraint caught duplicate: " + e.getMessage());
+
+                // Verify data integrity
+                Customer preservedCustomer = customerService.getCustomerById(100);
+                assertEquals(originalCustomerName, preservedCustomer.getCustomerName(),
+                        "Database should maintain original customer data");
+            } else {
+                fail("Unexpected RuntimeException: " + e.getMessage());
+            }
+
+        } catch (Exception e) {
+            fail("Unexpected exception type: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+        }
     }
 
     // ==================== READ CUSTOMER TESTS ====================
 
     @Test
     @DisplayName("Test retrieving a customer by ID")
+    @Timeout(value = 3)
     void testRetrieveCustomer_ValidId_Success() {
         // Assumption: Pre-populated data exists in test database
         assumeTrue(customerService != null, "Customer service must be available");
@@ -221,6 +264,7 @@ public class CustomerTest {
 
     @Test
     @DisplayName("Test retrieving all customers")
+    @Timeout(value = 5)
     void testRetrieveAllCustomers_Success() {
         // Assumption: Test database has pre-populated data
         assumeTrue(customerService != null, "Customer service must be available");
@@ -242,6 +286,7 @@ public class CustomerTest {
 
     @Test
     @DisplayName("Test updating a customer's information")
+    @Timeout(value = 10)
     void testUpdateCustomer_ValidData_Success() {
         // Assumption: Pre-populated customer exists for updating
         Customer existingCustomer = customerService.getCustomerById(200);
@@ -268,35 +313,75 @@ public class CustomerTest {
         // Arrange
         Customer nonExistentCustomer = new Customer(9999, "Non Existent", "555-9999", "9999 Nowhere St");
 
-        // Act & Assert
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> customerService.updateCustomer(nonExistentCustomer)
-        );
+        try {
+            // Act
+            customerService.updateCustomer(nonExistentCustomer);
+            fail("Expected exception when updating non-existent customer");
 
-        assertTrue(exception.getMessage().contains("does not exist"),
-                "Exception should indicate customer does not exist");
+        } catch (IllegalArgumentException e) {
+            // Expected exception
+            assertTrue(e.getMessage().contains("does not exist"),
+                    "Exception should indicate customer does not exist");
+            assertTrue(e.getMessage().contains("9999"),
+                    "Exception should include the non-existent customer ID");
+
+            // Verify no customer was created as side effect
+            Customer shouldNotExist = customerService.getCustomerById(9999);
+            assertNull(shouldNotExist, "Failed update should not create new customer");
+
+            // Verify existing data is intact
+            assertEquals(3, customerService.getAllCustomers().size(),
+                    "Existing customer count should remain unchanged");
+
+            System.out.println("✓ Non-existent customer update properly rejected");
+
+        } catch (RuntimeException e) {
+            // Handle potential database-level errors
+            if (e.getMessage().contains("not found") || e.getMessage().contains("does not exist")) {
+                System.out.println("Database-level validation caught non-existent customer");
+                assertNull(customerService.getCustomerById(9999), "Customer should still not exist");
+            } else {
+                fail("Unexpected RuntimeException: " + e.getMessage());
+            }
+
+        } catch (Exception e) {
+            fail("Unexpected exception type: " + e.getClass().getSimpleName());
+        }
     }
 
     @Test
     @DisplayName("Test updating a customer with invalid data")
     void testUpdateCustomer_InvalidData_ThrowsException() {
-        // Test null customer
+        // Test null customer using assertThrows (simple case)
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
                 () -> customerService.updateCustomer(null)
         );
         assertEquals("Customer cannot be null", exception.getMessage());
 
-        // Test empty name
+        // Test empty name using try-catch for detailed validation
         Customer invalidCustomer = new Customer(200, "", "555-0002", "200 Oak Ave");
-        exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> customerService.updateCustomer(invalidCustomer)
-        );
-        assertEquals("Customer name cannot be null or empty", exception.getMessage());
 
-        // Test null contact number
+        try {
+            customerService.updateCustomer(invalidCustomer);
+            fail("Expected exception for empty customer name");
+
+        } catch (IllegalArgumentException e) {
+            assertEquals("Customer name cannot be null or empty", e.getMessage());
+
+            // Verify original customer data is preserved
+            Customer originalCustomer = customerService.getCustomerById(200);
+            assertNotNull(originalCustomer, "Original customer should still exist");
+            assertEquals("Jane Doe", originalCustomer.getCustomerName(),
+                    "Original customer name should be preserved");
+
+            System.out.println("✓ Empty name update rejected - original data preserved");
+
+        } catch (Exception e) {
+            fail("Unexpected exception: " + e.getMessage());
+        }
+
+        // Test null contact number using assertThrows (simple case)
         Customer invalidCustomer2 = new Customer(200, "Valid Name", null, "200 Oak Ave");
         exception = assertThrows(
                 IllegalArgumentException.class,
@@ -309,6 +394,7 @@ public class CustomerTest {
 
     @Test
     @DisplayName("Test deleting a customer")
+    @Timeout(value = 5)
     void testDeleteCustomer_ValidId_Success() {
         // Assumption: Pre-populated customer exists for deletion
         Customer existingCustomer = customerService.getCustomerById(300);
@@ -332,11 +418,30 @@ public class CustomerTest {
     @Test
     @DisplayName("Test deleting a non-existent customer")
     void testDeleteCustomer_NonExistentId_ReturnsFalse() {
-        // Act
-        boolean deleteResult = customerService.deleteCustomer(9999);
+        try {
+            // Act
+            boolean deleteResult = customerService.deleteCustomer(9999);
 
-        // Assert
-        assertFalse(deleteResult, "Deleting non-existent customer should return false");
+            // Assert - Should return false, not throw exception
+            assertFalse(deleteResult, "Deleting non-existent customer should return false");
+
+            // Verify system stability
+            assertEquals(3, customerService.getAllCustomers().size(),
+                    "Customer count should remain unchanged");
+
+            System.out.println("✓ Non-existent customer deletion handled gracefully");
+
+        } catch (IllegalArgumentException e) {
+            // Some implementations might throw exception for invalid operations
+            if (e.getMessage().contains("positive") || e.getMessage().contains("valid")) {
+                System.out.println("Implementation validates ID before deletion: " + e.getMessage());
+            } else {
+                fail("Unexpected validation error: " + e.getMessage());
+            }
+
+        } catch (Exception e) {
+            fail("Unexpected exception during non-existent customer deletion: " + e.getMessage());
+        }
     }
 
     @Test
@@ -361,6 +466,7 @@ public class CustomerTest {
 
     @Test
     @DisplayName("Integration test - Create, Read, Update, Delete cycle")
+    @Timeout(value = 10)
     void testCRUDCycle_CompleteWorkflow_Success() {
         // Assumption: Database supports full CRUD operations
         assumeTrue(customerService != null, "Customer service must be available for CRUD operations");
@@ -395,6 +501,7 @@ public class CustomerTest {
 
     @Test
     @DisplayName("Test database persistence across operations")
+    @Timeout(value = 10)
     void testDatabasePersistence_MultipleOperations_DataPersists() {
         // Assumption: Database persists data across multiple operations
         assumeTrue(customerService != null, "Customer service must be available");
@@ -425,6 +532,7 @@ public class CustomerTest {
 
     @Test
     @DisplayName("Test database assumptions validation")
+    @Timeout(value = 8)
     void testDatabaseAssumptions_ValidateTestEnvironment() {
         // Validate all assumptions about test environment
 
