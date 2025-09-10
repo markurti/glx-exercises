@@ -14,7 +14,6 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-
 public class CustomerTest {
     private CustomerServiceImpl customerService;
     private static TestDatabaseConnection testDatabaseConnection;
