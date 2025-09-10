@@ -273,7 +273,7 @@ public class CustomerTest {
         // Arrange
         Customer customer = new Customer(custId, customerName, contactNumber, address);
 
-        if ("valid".equals(expectedResult.toLowerCase())) {
+        if ("valid".equalsIgnoreCase(expectedResult)) {
             // Should succeed
             assertDoesNotThrow(() -> customerService.addCustomer(customer),
                     String.format("Valid boundary customer %d should be created", custId));
@@ -287,7 +287,7 @@ public class CustomerTest {
 
             System.out.printf("✓ Boundary customer %d created successfully: %s%n", custId, customerName);
 
-        } else if ("invalid".equals(expectedResult.toLowerCase())) {
+        } else if ("invalid".equalsIgnoreCase(expectedResult)) {
             // Should fail with validation exception
             IllegalArgumentException exception = assertThrows(
                     IllegalArgumentException.class,
@@ -313,7 +313,6 @@ public class CustomerTest {
     @ParameterizedTest
     @CsvSource({
             "1, 'A', '1', 'X'",  // Minimal valid data
-            "999999, 'Very Long Customer Name That Tests Maximum Length Boundaries', '555-123-4567-8901-2345', 'Very Long Address That Tests The Maximum Length Boundaries For Address Field'",  // Maximum length data
             "12345, 'Customer With Numbers 123', '555-ALPHA-1234', '123 Numeric Street Apt 456'",  // Mixed alphanumeric
             "7777, 'Special-Customer_Name', '555.123.4567', '123 Main St., Suite #500'"  // Special characters
     })

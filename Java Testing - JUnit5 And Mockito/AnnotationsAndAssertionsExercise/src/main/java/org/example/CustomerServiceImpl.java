@@ -3,7 +3,7 @@ package org.example;
 import java.util.List;
 
 public class CustomerServiceImpl implements CustomerService {
-    private CustomerRepository customerRepository;
+    private final CustomerRepository customerRepository;
 
     public CustomerServiceImpl(CustomerRepository customerRepository) {
         this.customerRepository = customerRepository;
@@ -20,6 +20,7 @@ public class CustomerServiceImpl implements CustomerService {
         if (customer.getContactNumber() == null || customer.getContactNumber().trim().isEmpty()) {
             throw new IllegalArgumentException("Contact number cannot be null or empty");
         }
+
         customerRepository.addCustomer(customer);
     }
 
