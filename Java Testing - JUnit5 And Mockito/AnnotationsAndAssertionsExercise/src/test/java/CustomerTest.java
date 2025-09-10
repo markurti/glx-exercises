@@ -1,5 +1,7 @@
 import org.example.*;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -464,39 +466,49 @@ public class CustomerTest {
 
     // ==================== INTEGRATION TESTS ====================
 
-    @Test
-    @DisplayName("Integration test - Create, Read, Update, Delete cycle")
-    @Timeout(value = 10)
-    void testCRUDCycle_CompleteWorkflow_Success() {
+    @ParameterizedTest
+    @CsvSource({
+            "3001, 'Integration Customer A', '555-INT-A', 'Integration Address A'",
+            "3002, 'Integration Customer B', '555-INT-B', 'Integration Address B'",
+            "3003, 'Integration Customer C', '555-INT-C', 'Integration Address C'"
+    })
+    @DisplayName("Integration test - Create, Read, Update, Delete cycle with multiple customers")
+    @Timeout(value = 15)
+    void testCRUDCycle_CompleteWorkflow_Success(int custId, String originalName, String originalContact, String originalAddress) {
         // Assumption: Database supports full CRUD operations
         assumeTrue(customerService != null, "Customer service must be available for CRUD operations");
 
         // CREATE - Add new customer
-        Customer newCustomer = new Customer(2001, "Integration Test User", "555-INT", "Integration Address");
+        Customer newCustomer = new Customer(custId, originalName, originalContact, originalAddress);
         assertDoesNotThrow(() -> customerService.addCustomer(newCustomer));
 
         // READ - Verify customer was created
-        Customer createdCustomer = customerService.getCustomerById(2001);
-        assertNotNull(createdCustomer, "Customer should be created");
-        assertEquals("Integration Test User", createdCustomer.getCustomerName());
+        Customer createdCustomer = customerService.getCustomerById(custId);
+        assertNotNull(createdCustomer, String.format("Customer %d should be created", custId));
+        assertEquals(originalName, createdCustomer.getCustomerName());
 
         // UPDATE - Modify customer data
-        Customer updatedCustomer = new Customer(2001, "Updated Integration User", "555-UPD", "Updated Address");
+        String updatedName = "Updated " + originalName;
+        String updatedContact = originalContact.replace("INT", "UPD");
+        String updatedAddress = "Updated " + originalAddress;
+        Customer updatedCustomer = new Customer(custId, updatedName, updatedContact, updatedAddress);
         assertDoesNotThrow(() -> customerService.updateCustomer(updatedCustomer));
 
         // READ - Verify update was successful
-        Customer modifiedCustomer = customerService.getCustomerById(2001);
-        assertNotNull(modifiedCustomer, "Updated customer should exist");
-        assertEquals("Updated Integration User", modifiedCustomer.getCustomerName(), "Name should be updated");
-        assertEquals("555-UPD", modifiedCustomer.getContactNumber(), "Contact should be updated");
+        Customer modifiedCustomer = customerService.getCustomerById(custId);
+        assertNotNull(modifiedCustomer, String.format("Updated customer %d should exist", custId));
+        assertEquals(updatedName, modifiedCustomer.getCustomerName(), "Name should be updated");
+        assertEquals(updatedContact, modifiedCustomer.getContactNumber(), "Contact should be updated");
 
         // DELETE - Remove customer
-        boolean deleteResult = customerService.deleteCustomer(2001);
-        assertTrue(deleteResult, "Delete should be successful");
+        boolean deleteResult = customerService.deleteCustomer(custId);
+        assertTrue(deleteResult, String.format("Delete of customer %d should be successful", custId));
 
         // READ - Verify deletion was successful
-        Customer deletedCustomer = customerService.getCustomerById(2001);
-        assertNull(deletedCustomer, "Customer should be deleted");
+        Customer deletedCustomer = customerService.getCustomerById(custId);
+        assertNull(deletedCustomer, String.format("Customer %d should be deleted", custId));
+
+        System.out.printf("✓ CRUD cycle completed successfully for customer %d (%s)%n", custId, originalName);
     }
 
     @Test
