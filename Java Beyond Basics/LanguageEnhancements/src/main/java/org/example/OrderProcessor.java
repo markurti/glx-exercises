@@ -10,5 +10,17 @@ public interface OrderProcessor extends DiscountCalculator {
         System.out.println("Added item to cart.");
     }
 
-
+    // Default method for removing items from cart
+    default boolean removeItemFromCart(Cart cart, Item item) {
+        if (item == null) {
+            throw new IllegalArgumentException("Item cannot be null");
+        }
+        boolean removed = cart.getItems().remove(item);
+        if (removed) {
+            System.out.println("Removed item from cart.");
+        } else {
+            System.out.println("Item not found in cart.");
+        }
+        return removed;
+    }
 }
