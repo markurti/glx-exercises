@@ -1,7 +1,5 @@
 package org.example;
 
-import org.w3c.dom.ls.LSException;
-
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -11,7 +9,37 @@ public class Main {
         // Create sample sales data
         List<Sale> salesData = createSampleData();
 
+        SalesAnalyzer analyzer = new SalesAnalyzer();
 
+        // i) Filter sales after January 1, 2023
+        analyzer.filterSalesAfterDate(salesData, LocalDate.of(2023, 1, 1));
+
+        // ii) Map sales to product names
+        analyzer.mapToProductNames(salesData);
+
+        // iii) Calculate total sales for specific product
+        analyzer.calculateTotalSalesForProduct(salesData, "Smartphone");
+
+        // iv) Sort sales by amount (descending)
+        analyzer.sortSalesByAmountDescending(salesData);
+
+        // v) Collect distinct customer IDs
+        analyzer.collectDistinctCustomerIds(salesData);
+
+        // vi) Group sales by product name
+        analyzer.groupSalesByProduct(salesData);
+
+        // vii) Filter high-value sales and calculate total
+        analyzer.filterHighValueSalesAndCalculateTotal(salesData, 100.0);
+
+        // viii) Parallel streams example
+        analyzer.parallelStreamSortSalesByAmountDescending(salesData);
+
+        // ix) Map to SaleSummary objects
+        analyzer.mapToSaleSummary(salesData);
+
+        // x) Calculate average sales amount
+        analyzer.calculateAverageSalesAmount(salesData);
     }
 
     // Create sample sales data for testing
