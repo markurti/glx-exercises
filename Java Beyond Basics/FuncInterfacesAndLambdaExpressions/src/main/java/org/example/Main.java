@@ -78,5 +78,31 @@ public class Main {
 
             return new MenuItem(menuItem.getName() + offerDescription, newPrice, offerDescription);
         };
+
+        System.out.println("RESTAURANT MENU MANAGEMENT SYSTEM");
+        MenuItem[] menuItems = {pizza, salad, tiramisu, coffee, mysteryItem, unknownItem};
+
+        for (MenuItem menuItem : menuItems) {
+            System.out.println("Original item: " + menuItem);
+
+            try {
+                // Categorize with default handling
+                String category = categorizer.categorizeWithDefault(menuItem, "SPECIAL");
+                System.out.println("Categorized as: " + category);
+
+                // Apply speical offers
+                MenuItem discountedItem = offerApplier.applyOffer(menuItem);
+                System.out.println("After Offers: " + discountedItem);
+
+                double savings = menuItem.getPrice() - discountedItem.getPrice();
+                if (savings > 0) {
+                    System.out.println("Savings: $" + String.format("%.2f", savings));
+                }
+            } catch (Exception e) {
+                System.out.println("Error processing item: " + e.getMessage());
+            }
+
+            System.out.println("-----------------------------");
+        }
     }
 }
