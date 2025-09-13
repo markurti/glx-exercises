@@ -24,6 +24,27 @@ public class Main {
 
         processor.displayCartSummary(cart);
 
+        // Test different discount types
+        System.out.println("Different discount types:");
 
+        // Percentage discount
+        OrderSummary summary1 = processor.processOrder(cart, "percentage", 15.0);
+        System.out.println(summary1);
+
+        // Add more items for BOGO demo
+        processor.addItemToCart(cart, headphones);
+        processor.addItemToCart(cart, new Item("Mouse Pad", 19.99));
+
+        // BOGO discount
+        OrderSummary summary2 = processor.processOrder(cart, "bogo");
+        System.out.println(summary2);
+
+        // Tiered discount
+        OrderSummary summary3 = processor.processOrder(cart, "tiered");
+        System.out.println(summary3);
+
+        // Seasonal discount
+        OrderSummary summary4 = processor.processOrder(cart, "seasonal", "winter");
+        System.out.println(summary4);
     }
 }
