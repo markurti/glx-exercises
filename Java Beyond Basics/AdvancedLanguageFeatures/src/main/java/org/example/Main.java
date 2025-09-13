@@ -18,6 +18,8 @@ public class Main {
             System.out.println("Found oldest person: " + OldestPersonFinder.findOldestPerson(people).get());
         }
 
-
+        System.out.println("Test Person to JSON string converter");
+        String JSONdata = PersonToJsonConverter.SendPersonsToJSON(people);
+        System.out.println(JSONdata);
     }
 }
