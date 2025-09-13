@@ -4,18 +4,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Cart {
-    private List<Item> items;
+    private final List<Item> items;
 
     public Cart() {
         items = new ArrayList<>();
     }
 
     public List<Item> getItems() {
-        return new ArrayList<>(items);
-    }
-
-    public void setItems(List<Item> items) {
-        this.items = items;
+        return items;
     }
 
     public int getItemCount() {
