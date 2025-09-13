@@ -10,6 +10,10 @@ public class Cart {
         items = new ArrayList<>();
     }
 
+    public List<Item> getItems() {
+        return new ArrayList<>(items);
+    }
+
     public void setItems(List<Item> items) {
         this.items = items;
     }
