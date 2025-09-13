@@ -23,4 +23,11 @@ public interface OrderProcessor extends DiscountCalculator {
         }
         return removed;
     }
+
+    // Default method for calculating total price
+    default double calculateTotalPrice(Cart cart) {
+        return cart.getItems().stream().mapToDouble(Item::getPrice).sum();
+    }
+
+    // Defulat method
 }
