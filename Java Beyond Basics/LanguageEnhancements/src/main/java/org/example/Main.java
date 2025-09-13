@@ -46,5 +46,28 @@ public class Main {
         // Seasonal discount
         OrderSummary summary4 = processor.processOrder(cart, "seasonal", "winter");
         System.out.println(summary4);
+
+        // Custom discount showcase
+        System.out.println("Premium discount showcase:");
+        PremiumOrderProcessor premiumProcessor = new PremiumOrderProcessor();
+
+        // Standard discount comparison
+        Cart smallCart = new Cart();
+        premiumProcessor.addItemToCart(smallCart, mouse);
+        premiumProcessor.addItemToCart(smallCart, new Item("Cable", 15.99));
+
+        System.out.println("Regular customer standard discount:");
+        OrderProcessor regular = new OrderProcessor() {};
+        OrderSummary regularSummary = regular.processOrder(smallCart, "standard");
+        System.out.println(regularSummary);
+
+        System.out.println("Premium customer standard discount:");
+        OrderSummary premiumSummary = premiumProcessor.processOrder(smallCart, "standard");
+        System.out.println(premiumSummary);
+
+        // Loyalty discount
+        System.out.println("Premium customer with loyalty points:");
+        OrderSummary loyaltySummary = premiumProcessor.processOrderWithLoyalty(cart, 1500);
+        System.out.println(loyaltySummary);
     }
 }
