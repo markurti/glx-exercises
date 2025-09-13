@@ -10,5 +10,20 @@ public class Main {
         Item keyboard = new Item("Mechanical Keyboard", 149.99);
         Item monitor = new Item("4K Monitor", 299.99);
         Item headphones = new Item("Gaming Headphones", 79.99);
+
+        // Create cart and processor
+        Cart cart = new Cart();
+        OrderProcessor processor = new OrderProcessor() {};
+
+        // Cart operations
+        System.out.println("Adding items to cart");
+        processor.addItemToCart(cart, laptop);
+        processor.addItemToCart(cart, mouse);
+        processor.addItemToCart(cart, keyboard);
+        processor.addItemToCart(cart, monitor);
+
+        processor.displayCartSummary(cart);
+
+
     }
 }
