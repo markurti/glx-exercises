@@ -40,6 +40,43 @@ public class Main {
             return null;
         };
 
+        ApplySpecialOffer offerApplier = (menuItem) -> {
+            String category = categorizer.categorize(menuItem);
 
+            // Handle unknown categories
+            if (category == null) {
+                System.out.println("Unknown category for " + menuItem.getName() + ". Not discount applied.");
+
+                return new MenuItem(menuItem.getName(), menuItem.getPrice(), "UNKNOWN");
+            }
+
+            double newPrice = menuItem.getPrice();
+            String offerDescription = "";
+
+            switch (category) {
+                case "APPETIZER":
+                    newPrice = menuItem.getPrice() * 0.85; // 15% discount
+                    offerDescription = " (15% Happy Hour Discount)";
+                    break;
+                case "MAIN_COURSE":
+                    if (menuItem.getPrice() > 15.00) {
+                        newPrice = menuItem.getPrice() * 0.90; // 10% discount for expensive mains
+                        offerDescription = " (10% Premium Dish Discount)";
+                    }
+                    break;
+                case "DESSERT":
+                    newPrice = menuItem.getPrice() * 0.80; // 20% discount
+                    offerDescription = " (20% Sweet Treats Offer)";
+                    break;
+                case "BEVERAGE":
+                    if (menuItem.getPrice() < 5.00) {
+                        newPrice = menuItem.getPrice() * 0.95; // 5% discount for cheap beverages
+                        offerDescription = " (5% Coffee Break Discount)";
+                    }
+                    break;
+            }
+
+            return new MenuItem(menuItem.getName() + offerDescription, newPrice, offerDescription);
+        };
     }
 }
