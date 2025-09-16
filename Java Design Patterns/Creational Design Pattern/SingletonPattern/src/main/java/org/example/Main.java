@@ -5,38 +5,47 @@ import java.io.*;
 public class Main {
     public static void main(String[] args) {
         // Multithreading demo
+        Thread thread1 = new Thread(() -> {
+            Logger logger = Logger.getLoggerInstance();
+            System.out.println("Instance from thread 1: " + logger);
+        });
+
+        Thread thread2 = new Thread(() -> {
+            Logger logger = Logger.getLoggerInstance();
+            System.out.println("Instance from thread 2: " + logger);
+        });
+
+        thread1.start();
+        thread2.start();
+
         try {
-            Thread thread1 = new Thread(() -> {
-                Logger logger = Logger.getLoggerInstance();
-                System.out.println("Instance from thread 1: " + logger);
-            });
-
-            Thread thread2 = new Thread(() -> {
-                Logger logger = Logger.getLoggerInstance();
-                System.out.println("Instance from thread 2: " + logger);
-            });
-
-            thread1.start();
-            thread2.start();
-
             thread1.join();
             thread2.join();
         } catch (Exception e) {
             System.out.println("Failed creating instance with threads: " + e.getMessage());
         }
 
-        serializeLogger("C:\\Users\\Mark\\OneDrive\\Documents\\Year-1-CS\\manualExeclab3.txt");
-        deserializeLogger("C:\\Users\\Mark\\OneDrive\\Documents\\Year-1-CS\\manualExeclab3.txt");
+        // Demo for serializing/deserializing problem
+        serializeLogger();
+        deserializeLogger();
+
+        // Cloning problem demo
+        Logger logger = Logger.getLoggerInstance();
+        try {
+            Logger logger2 = (Logger) logger.clone();
+        } catch (CloneNotSupportedException e) {
+            System.out.println("Failed cloning: " + e.getMessage());
+        }
     }
 
-    private static void serializeLogger(String filename) {
+    private static void serializeLogger() {
         Logger logger = Logger.getLoggerInstance();
 
         FileOutputStream file = null;
         ObjectOutputStream out = null;
 
         try {
-            file = new FileOutputStream(filename);
+            file = new FileOutputStream("C:\\Users\\Mark\\OneDrive\\Documents\\Year-1-CS\\manualExeclab3.txt");
             out = new ObjectOutputStream(file);
 
             out.writeObject(logger);
@@ -58,13 +67,13 @@ public class Main {
         }
     }
 
-    private static void deserializeLogger(String filename) {
+    private static void deserializeLogger() {
         FileInputStream file = null;
         ObjectInputStream in = null;
         Logger logger = null;
 
         try {
-            file = new FileInputStream(filename);
+            file = new FileInputStream("C:\\Users\\Mark\\OneDrive\\Documents\\Year-1-CS\\manualExeclab3.txt");
             in = new ObjectInputStream(file);
 
             logger = (Logger) in.readObject();
