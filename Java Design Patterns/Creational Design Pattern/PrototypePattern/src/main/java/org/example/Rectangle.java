@@ -2,6 +2,7 @@ package org.example;
 
 public class Rectangle implements Shape {
     private final String type = "Rectangle";
+    private int id;
 
     @Override
     public void draw() {
@@ -11,6 +12,16 @@ public class Rectangle implements Shape {
     @Override
     public String getType() {
         return type;
+    }
+
+    @Override
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    @Override
+    public int getId() {
+        return id;
     }
 
     @Override
