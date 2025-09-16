@@ -1,6 +1,6 @@
 package org.example;
 
-public interface Vehicle {
+public interface AbstractVehicle {
     void start();
     void stop();
     void accelerate();
