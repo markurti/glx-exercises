@@ -1,4 +1,4 @@
-package org.example;
+package org.example.Entity;
 
 public class Submarine implements AbstractVehicle {
     @Override

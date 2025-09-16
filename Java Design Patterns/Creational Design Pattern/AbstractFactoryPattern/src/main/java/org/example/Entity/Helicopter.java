@@ -1,4 +1,4 @@
-package org.example;
+package org.example.Entity;
 
 public class Helicopter implements AbstractVehicle {
     @Override

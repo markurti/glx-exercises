@@ -1,4 +1,4 @@
-package org.example;
+package org.example.Entity;
 
 public interface AbstractVehicle {
     void start();

@@ -1,4 +1,6 @@
-package org.example;
+package org.example.AbstractFactory;
+
+import org.example.Entity.AbstractVehicle;
 
 public interface AbstractVehicleFactory {
     public AbstractVehicle createCar();
