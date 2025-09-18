@@ -4,7 +4,7 @@ public class Client {
     public static void main(String[] args) {
         ChatRoomMediator chatRoom = new ChatRoomMediator();
 
-        System.out.println("=== Chat Room Demo ===");
+        System.out.println("====Chat Room Demo====");
 
         // Create users
         User alice = new User(chatRoom, "Alice");
