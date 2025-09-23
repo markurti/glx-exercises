@@ -101,6 +101,47 @@ public class Hotel {
         }
     }
 
+    public Hotel getFilteredHotel(int hotel_id) {
+        String getHotelQuery = "SELECT * FROM Hotel WHERE hotel_id = ?";
+
+        try (Connection connection = DatabaseConnectionManager.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(getHotelQuery)) {
+
+            preparedStatement.setInt(1, hotel_id);
+
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (!resultSet.next()) {
+                    throw new SQLException("Hotel with id " + hotel_id + " does not exist.");
+                }
+
+                int id = resultSet.getInt("hotel_id");
+                String name = resultSet.getString("name");
+                String location = resultSet.getString("location");
+
+                Hotel hotel = new Hotel(id, name, location, new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+
+                hotel.loadRooms(connection, id);
+                hotel.loadGuests(connection, id);
+                hotel.loadReservations(connection, id);
+
+                // Use Streams to filter and display room details
+                System.out.println("Room details for hotel " + hotel.getName() + ":");
+
+                hotel.getRooms().stream()
+                        .filter(Room::isAvailable) // example: filter only available rooms
+                        .forEach(room -> System.out.printf("Room %d (%s)\n",
+                                room.getRoom_number(),
+                                room.getType()));
+
+                return hotel;
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Failed to get Hotel with hotel_id " + hotel_id + ": " + e.getMessage());
+            return null;
+        }
+    }
+
     // Helper method to fetch Hotel object from the database
     private void loadRooms(Connection connection, int hotel_id) throws SQLException {
         String roomQuery = "SELECT * FROM Room WHERE hotel_id = ?";

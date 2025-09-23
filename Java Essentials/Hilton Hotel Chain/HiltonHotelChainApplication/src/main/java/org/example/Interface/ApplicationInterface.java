@@ -1,9 +1,6 @@
 package org.example.Interface;
 
-import org.example.Entity.Guest;
-import org.example.Entity.Hotel;
-import org.example.Entity.Reservation;
-import org.example.Entity.Room;
+import org.example.Entity.*;
 
 import java.sql.Date;
 import java.util.InputMismatchException;
@@ -48,6 +45,9 @@ public class ApplicationInterface {
                     case 9:
                         getAllReservationsInHotelInterface();
                         break;
+                    case 10:
+                        getFilteredHotelInterface();
+                        break;
                     case 0:
                         System.out.println("Closing application...");
                         return;
@@ -68,6 +68,7 @@ public class ApplicationInterface {
         System.out.println("7. Make Reservation for a room");
         System.out.println("8. Cancel Room Reservation");
         System.out.println("9. Get all reservations in Hotel");
+        System.out.println("10. Get Hotel with Filtered rooms");
         System.out.println("0. Exit Application");
     }
 
@@ -196,7 +197,8 @@ public class ApplicationInterface {
         }
 
         Guest guest = new Guest(guestName, guestEmail, guestPhone, hotelId);
-        guest.addGuest(guest);
+        GuestDAO guestDAO = new GuestDAO();
+        guestDAO.addGuest(guest);
     }
 
     private void makeReservationInterface() {
@@ -273,6 +275,22 @@ public class ApplicationInterface {
         }
     }
 
+    private void getFilteredHotelInterface() {
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.print("Enter hotel id: ");
+        int hotelId = scanner.nextInt();
+
+        Hotel hotelInstance = new Hotel();
+        Hotel hotel = hotelInstance.getFilteredHotel(hotelId);
+        if (hotel == null) {
+            System.out.println("Hotel not found. Try again.");
+            return;
+        }
+
+        System.out.println(hotel);
+    }
+
     private Date validateSqlDate(String input) {
         try {
             return Date.valueOf(input);
@@ -290,7 +308,7 @@ public class ApplicationInterface {
 
     private boolean isValidGuestId(int guestId) {
         // Check if chosen guest exists
-        Guest guestInstance = new Guest();
+        GuestDAO guestInstance = new GuestDAO();
         Guest guest = guestInstance.getGuest(guestId);
         return guest != null;
     }
