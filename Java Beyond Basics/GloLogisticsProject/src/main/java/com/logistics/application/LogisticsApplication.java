@@ -109,22 +109,40 @@ public class LogisticsApplication implements ILogisticsService {
     }
 
     @Override
+    public void addCarrier(Carrier carrier) {
+        carrier = carrierRepo.save(carrier);
+        carriers.add(carrier);
+        System.out.println("Carrier added: " + carrier.getName());
+    }
+
+    @Override
+    public void addWarehouse(Warehouse warehouse) {
+        warehouse = warehouseRepo.save(warehouse);
+        warehouses.add(warehouse);
+        System.out.println("Warehouse added with ID: " + warehouse.getId());
+    }
+
+    @Override
     public List<Shipment> getAllShipments() {
-        return new ArrayList<>(shipments);
+        // Always fetch fresh data from database
+        return shipmentRepo.findAll();
     }
 
     @Override
     public List<Warehouse> getAllWarehouses() {
-        return new ArrayList<>(warehouses);
+        // Always fetch fresh data from database
+        return warehouseRepo.findAll();
     }
 
     @Override
     public List<Carrier> getAllCarriers() {
-        return new ArrayList<>(carriers);
+        // Always fetch fresh data from database
+        return carrierRepo.findAll();
     }
 
     @Override
     public List<Customer> getAllCustomers() {
-        return new ArrayList<>(customers);
+        // Always fetch fresh data from database
+        return customerRepo.findAll();
     }
 }

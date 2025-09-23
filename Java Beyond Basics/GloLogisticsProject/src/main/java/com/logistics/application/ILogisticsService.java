@@ -12,6 +12,8 @@ public interface ILogisticsService {
     void removeVehicle(Vehicle vehicle);
     void addCustomer(Customer customer);
     void removeCustomer(Customer customer);
+    void addCarrier(Carrier carrier);
+    void addWarehouse(Warehouse warehouse);
     List<Shipment> getAllShipments();
     List<Warehouse> getAllWarehouses();
     List<Carrier> getAllCarriers();

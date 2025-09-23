@@ -54,7 +54,7 @@ public class ConsoleMenu {
                     break;
                 case 0:
                     running = false;
-                    System.out.println("Exiting system.");
+                    System.out.println("Exiting system");
                     break;
                 default:
                     System.out.println("Invalid option. Please try again.");
@@ -152,8 +152,8 @@ public class ConsoleMenu {
 
         carrier.setRates(new Rates(ground, air, ocean));
 
-        logisticsService.getAllCarriers().add(carrier);
-        System.out.println("Carrier added successfully!");
+        // Now properly saves to database
+        logisticsService.addCarrier(carrier);
     }
 
     private void viewCarriersMenu() {
@@ -163,10 +163,11 @@ public class ConsoleMenu {
         if (carriers.isEmpty()) {
             System.out.println("No carriers found.");
         } else {
-            for (Carrier c : carriers) {
-                System.out.println(c);
+            for (int i = 0; i < carriers.size(); i++) {
+                Carrier c = carriers.get(i);
+                System.out.println((i + 1) + ". " + c);
                 if (c.getRates() != null) {
-                    System.out.println("  Rates: " + c.getRates());
+                    System.out.println("   Rates: " + c.getRates());
                 }
             }
         }
@@ -185,8 +186,8 @@ public class ConsoleMenu {
         Location location = new Location(lat, lon);
         Warehouse warehouse = new Warehouse(location, capacity);
 
-        logisticsService.getAllWarehouses().add(warehouse);
-        System.out.println("Warehouse added successfully!");
+        // Now properly saves to database
+        logisticsService.addWarehouse(warehouse);
     }
 
     private void viewWarehousesMenu() {
@@ -196,8 +197,9 @@ public class ConsoleMenu {
         if (warehouses.isEmpty()) {
             System.out.println("No warehouses found.");
         } else {
-            for (Warehouse w : warehouses) {
-                System.out.println(w);
+            for (int i = 0; i < warehouses.size(); i++) {
+                Warehouse w = warehouses.get(i);
+                System.out.println((i + 1) + ". " + w);
             }
         }
     }
@@ -249,25 +251,40 @@ public class ConsoleMenu {
 
         System.out.println("Available Shipments:");
         for (int i = 0; i < shipments.size(); i++) {
-            System.out.println(i + ". " + shipments.get(i));
+            Shipment s = shipments.get(i);
+            System.out.println((i + 1) + ". Shipment #" + s.getId() + " - " + s.getWeight() + "kg - Status: " + s.getStatus());
+            System.out.println("   From: " + s.getSender());
+            System.out.println("   To: " + s.getReceiver());
+            if (s.getCarrier() != null) {
+                System.out.println("   Current Carrier: " + s.getCarrier().getName());
+            }
         }
 
-        System.out.print("Select shipment index: ");
-        int shipmentIndex = getIntInput();
+        System.out.print("Select shipment number (1-" + shipments.size() + "): ");
+        int shipmentIndex = getIntInput() - 1;
 
-        System.out.println("Available Carriers:");
+        if (shipmentIndex < 0 || shipmentIndex >= shipments.size()) {
+            System.out.println("Invalid shipment selection.");
+            return;
+        }
+
+        System.out.println("\nAvailable Carriers:");
         for (int i = 0; i < carriers.size(); i++) {
-            System.out.println(i + ". " + carriers.get(i));
+            Carrier c = carriers.get(i);
+            System.out.println((i + 1) + ". " + c.getName());
+            if (c.getRates() != null) {
+                System.out.println("   Rates: " + c.getRates());
+            }
         }
 
-        System.out.print("Select carrier index: ");
-        int carrierIndex = getIntInput();
+        System.out.print("Select carrier number (1-" + carriers.size() + "): ");
+        int carrierIndex = getIntInput() - 1;
 
-        if (shipmentIndex >= 0 && shipmentIndex < shipments.size() &&
-                carrierIndex >= 0 && carrierIndex < carriers.size()) {
+        if (carrierIndex >= 0 && carrierIndex < carriers.size()) {
             logisticsService.assignCarrier(shipments.get(shipmentIndex), carriers.get(carrierIndex));
+            System.out.println("Carrier successfully assigned!");
         } else {
-            System.out.println("Invalid selection.");
+            System.out.println("Invalid carrier selection.");
         }
     }
 
@@ -284,25 +301,38 @@ public class ConsoleMenu {
 
         System.out.println("Available Shipments:");
         for (int i = 0; i < shipments.size(); i++) {
-            System.out.println(i + ". " + shipments.get(i));
+            Shipment s = shipments.get(i);
+            System.out.println((i + 1) + ". Shipment #" + s.getId() + " - " + s.getWeight() + "kg - Status: " + s.getStatus());
+            System.out.println("   From: " + s.getSender());
+            System.out.println("   To: " + s.getReceiver());
+            if (s.getWarehouse() != null) {
+                System.out.println("   Current Warehouse: " + s.getWarehouse());
+            }
         }
 
-        System.out.print("Select shipment index: ");
-        int shipmentIndex = getIntInput();
+        System.out.print("Select shipment number (1-" + shipments.size() + "): ");
+        int shipmentIndex = getIntInput() - 1;
 
-        System.out.println("Available Warehouses:");
+        if (shipmentIndex < 0 || shipmentIndex >= shipments.size()) {
+            System.out.println("Invalid shipment selection.");
+            return;
+        }
+
+        System.out.println("\nAvailable Warehouses:");
         for (int i = 0; i < warehouses.size(); i++) {
-            System.out.println(i + ". " + warehouses.get(i));
+            Warehouse w = warehouses.get(i);
+            System.out.println((i + 1) + ". " + w);
+            System.out.println("   Current inventory items: " + w.getInventory().size());
         }
 
-        System.out.print("Select warehouse index: ");
-        int warehouseIndex = getIntInput();
+        System.out.print("Select warehouse number (1-" + warehouses.size() + "): ");
+        int warehouseIndex = getIntInput() - 1;
 
-        if (shipmentIndex >= 0 && shipmentIndex < shipments.size() &&
-                warehouseIndex >= 0 && warehouseIndex < warehouses.size()) {
+        if (warehouseIndex >= 0 && warehouseIndex < warehouses.size()) {
             logisticsService.allocateWarehouse(shipments.get(shipmentIndex), warehouses.get(warehouseIndex));
+            System.out.println("Warehouse successfully allocated!");
         } else {
-            System.out.println("Invalid selection.");
+            System.out.println("Invalid warehouse selection.");
         }
     }
 
