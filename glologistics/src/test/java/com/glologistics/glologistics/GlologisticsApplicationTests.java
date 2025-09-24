@@ -1,0 +1,13 @@
+package com.glologistics.glologistics;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+class GlologisticsApplicationTests {
+
+	@Test
+	void contextLoads() {
+	}
+
+}
