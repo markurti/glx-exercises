@@ -6,6 +6,6 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface SIMDetailsRepository extends JpaRepository<SimDetails, Long> {
+public interface SimDetailsRepository extends JpaRepository<SimDetails, Long> {
     Optional<SimDetails> findBySimNumberAndServiceNumber(String simNumber, String serviceNumber);
 }

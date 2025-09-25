@@ -6,6 +6,6 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface SIMOffersRepository extends JpaRepository<SimOffers, Long> {
+public interface SimOffersRepository extends JpaRepository<SimOffers, Long> {
     Optional<SimOffers> findBySimId(Long simId);
 }
