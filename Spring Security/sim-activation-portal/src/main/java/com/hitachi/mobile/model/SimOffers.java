@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 @Entity
 @Table(name = "sim_offers")
 public class SimOffers {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "offer_id")

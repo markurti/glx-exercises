@@ -6,6 +6,7 @@ import java.time.LocalDate;
 @Entity
 @Table(name = "customer")
 public class Customer {
+
     @Id
     @Column(name = "unique_id_number", length = 16)
     private String uniqueIdNumber;
@@ -25,15 +26,20 @@ public class Customer {
     @Column(name = "id_type")
     private String idType;
 
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "customer_address_id")
-    private CustomerAddress customerAddress;
+    @Column(name = "address", length = 25)
+    private String address;
 
-    @Column(name = "sim_id")
-    private Long simId;
+    @Column(name = "city")
+    private String city;
 
     @Column(name = "state")
     private String state;
+
+    @Column(name = "pin_code", length = 6)
+    private String pinCode;
+
+    @Column(name = "sim_id")
+    private Long simId;
 
     // Constructors
     public Customer() {}
@@ -57,12 +63,18 @@ public class Customer {
     public String getIdType() { return idType; }
     public void setIdType(String idType) { this.idType = idType; }
 
-    public CustomerAddress getCustomerAddress() { return customerAddress; }
-    public void setCustomerAddress(CustomerAddress customerAddress) { this.customerAddress = customerAddress; }
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
 
-    public Long getSimId() { return simId; }
-    public void setSimId(Long simId) { this.simId = simId; }
+    public String getCity() { return city; }
+    public void setCity(String city) { this.city = city; }
 
     public String getState() { return state; }
     public void setState(String state) { this.state = state; }
+
+    public String getPinCode() { return pinCode; }
+    public void setPinCode(String pinCode) { this.pinCode = pinCode; }
+
+    public Long getSimId() { return simId; }
+    public void setSimId(Long simId) { this.simId = simId; }
 }
